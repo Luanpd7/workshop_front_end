@@ -1,6 +1,6 @@
-class LoginUser {
+class User {
 
-  LoginUser({ this.email,  this.password,  this.name});
+  User({ this.email,  this.password,  this.name});
 
 
   final String? name;
@@ -13,5 +13,10 @@ class LoginUser {
       'email': email,
       'password': password
     };
+  }
+
+  @override
+  String toString() {
+    return 'User{name: $name, email: $email, password: $password}';
   }
 }

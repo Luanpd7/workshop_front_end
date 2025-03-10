@@ -15,77 +15,30 @@ class Home extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.lightBlue.shade900,
-      appBar: AppBar(title: Text("Oficina do Paulo")),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: BoxDecoration(color: Colors.blue),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.person, size: 40, color: Colors.blue),
-                  ),
-                  SizedBox(height: 10),
-                  Text("Usuário", style: TextStyle(color: Colors.white, fontSize: 18)),
-                  Text("email@example.com", style: TextStyle(color: Colors.white70)),
-                ],
+      appBar: AppBar(title: Text("Oficina do Paulo"),
+      backgroundColor: Colors.blue.shade700,
+      ),
+
+      drawer: _Drawer(),
+      body: SingleChildScrollView(
+        child: Expanded(
+          child: Column(
+            children: [
+              Container(
+                height: 350,
+                width: 200,
               ),
-            ),
-            ListTile(
-              leading: Icon(Icons.home),
-              title: Text("Início"),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.photo_filter),
-              title: Text("Digitalizar documento"),
-              onTap: () {
-                context.go("/scanner");
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.settings),
-              title: Text("Configurações"),
-              onTap: () {
-                context.go("/tarefa");
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.exit_to_app),
-              title: Text("Sair"),
-              onTap: () {
-                context.go("/");
-              },
-            ),
-          ],
+              _ItemsHome(),
+            ],
+          ),
         ),
       ),
-      body: Center(child: Column(
-        children: [
-          SizedBox(
-            height: 350,
-            width: 200,
-          ),
-          _ItemsHome(),
-        ],
-      )),
     );
   }
 }
 
-
-
-
-
 class _ItemsHome extends StatelessWidget {
-  const _ItemsHome({super.key});
+  const _ItemsHome();
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +46,7 @@ class _ItemsHome extends StatelessWidget {
       children: [
         _ItemHome(label: 'Digitar serviço', icon: Icons.add),
         _ItemHome(label: 'Lista de serviços', icon: Icons.list),
+
       ],
     );
   }
@@ -140,4 +94,65 @@ class _ItemHome extends StatelessWidget {
     );
   }
 }
+
+
+class _Drawer extends StatelessWidget {
+  const _Drawer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(color: Colors.blue),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.white,
+                  child: Icon(Icons.person, size: 40, color: Colors.blue),
+                ),
+                SizedBox(height: 10),
+                Text("Usuário", style: TextStyle(color: Colors.white, fontSize: 18)),
+                Text("email@example.com", style: TextStyle(color: Colors.white70)),
+              ],
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.home),
+            title: Text("Início"),
+            onTap: () {
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.photo_filter),
+            title: Text("Digitalizar documento"),
+            onTap: () {
+              context.go("/scanner");
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.settings),
+            title: Text("Configurações"),
+            onTap: () {
+              context.go("/tarefa");
+            },
+          ),
+          ListTile(
+            leading: Icon(Icons.exit_to_app),
+            title: Text("Sair"),
+            onTap: () {
+              context.go("/");
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
