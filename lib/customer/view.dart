@@ -35,35 +35,30 @@ class RegisterCustomer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.lightBlue.shade900,
-      appBar: AppBar(
-        title: Text("Registar serviço"),
-        backgroundColor: Colors.blue.shade700,
-      ),
-      body: ChangeNotifierProvider<RegisterCustomerState>(
-        create: (context) => RegisterCustomerState(),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(18.0),
-            child: Consumer<RegisterCustomerState>(
-              builder: (context, state, Widget? _) {
-                return Form(
-                  key: state._formKey,
-                  child: Column(
-                    children: [
-                      _InfoCardCustomer(),
-                      _InfoCardAddress(),
-                      _InfoCardObservation(),
-                      _SaveButton(),
-                    ],
-                  ),
-                );
-              },
+    return  Center(
+        child: ChangeNotifierProvider<RegisterCustomerState>(
+          create: (context) => RegisterCustomerState(),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(18.0),
+              child: Consumer<RegisterCustomerState>(
+                builder: (context, state, Widget? _) {
+                  return Form(
+                    key: state._formKey,
+                    child: Column(
+                      children: [
+                        _InfoCardCustomer(),
+                        _InfoCardAddress(),
+                        _InfoCardObservation(),
+                        _SaveButton(),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ),
-      ),
     );
   }
 }

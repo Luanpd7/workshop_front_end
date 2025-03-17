@@ -43,7 +43,7 @@ class _ItemsHome extends StatelessWidget {
             icon: Icons.add,
             subtitle: 'Registrar, editar ou visualizar serviços ativos',
             onPressed: () {
-              context.push('/registerCustomer');
+              context.push('/registerService');
             }),
         _ItemHome(
             label: 'Histórico Serviços',

@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import 'package:workshop_front_end/login/view.dart';
 import '../customer/view.dart';
 import '../home/home.dart';
+import '../service/tabService.dart';
 
 
 class RouterApp{
@@ -16,8 +17,8 @@ class RouterApp{
         builder: (context, state) => Home(),
       ),
       GoRoute(
-        path: '/registerCustomer',
-        builder: (context, state) => RegisterCustomer(),
+        path: '/registerService',
+        builder: (context, state) => ServiceTab(),
       ),
     ],
   );
