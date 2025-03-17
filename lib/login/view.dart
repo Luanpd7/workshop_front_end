@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:workshop_front_end/domain/use_case_user.dart';
 import '../repository/repository_user.dart';
 import '../util/modal.dart';
+import 'entities/login.dart';
 
 class LoginState with ChangeNotifier {
-  LoginState() ;
+  LoginState();
 
-
-  TextEditingController nomeController = TextEditingController();
+  TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   TextEditingController passwordRepeatController = TextEditingController();
-
 
   final _formKey = GlobalKey<FormState>();
 
@@ -20,30 +20,29 @@ class LoginState with ChangeNotifier {
 
   bool get isSignUp => _isSignUp;
 
-
   set isSignUp(bool value) {
     _isSignUp = value;
     notifyListeners();
   }
 
   void clearFields() {
-    nomeController.clear();
+    nameController.clear();
     emailController.clear();
     passwordRepeatController.clear();
     passwordController.clear();
     notifyListeners();
   }
 
+  Future<bool> saveForm({required User user}) async {
+    final repositoryUser = RepositoryUser();
+    final useCaseUser =  UseCaseUser(repositoryUser);
 
-  Future<bool> saveForm() async {
-   final repositoryUser = RepositoryUser();
-    return await repositoryUser.getLoginUser(
-     email: emailController.text,
-     password: passwordController.text,
-   );
+    return !_isSignUp
+        ? await useCaseUser.getLoginUser(
+           user: user
+          )
+        : await useCaseUser.addNewUser(user: user);
   }
-
-
 }
 
 class Login extends StatelessWidget {
@@ -51,7 +50,6 @@ class Login extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return ChangeNotifierProvider<LoginState>(
       create: (context) => LoginState(),
       child: Scaffold(
@@ -84,21 +82,28 @@ class Login extends StatelessWidget {
                           alignment: Alignment.topCenter,
                           child: _TitleLogin(
                             label: state.isSignUp ? 'Inscrever-se' : 'Acessar',
-
                           ),
                         ),
                         if (state.isSignUp) ...[
                           _NameInput(),
                           _EmailInput(label: 'Digite seu e-mail:'),
-                          _PasswordInput(label: 'Digite uma nova senha:',
-                            controller: state.passwordController,),
-                          _PasswordInput(label: 'Digite novamente a senha:',
-                            controller: state.passwordRepeatController,),
+                          _PasswordInput(
+                            label: 'Digite uma nova senha:',
+                            controller: state.passwordController,
+                          ),
+                          _PasswordInput(
+                            label: 'Digite novamente a senha:',
+                            controller: state.passwordRepeatController,
+                          ),
                         ],
                         if (!state.isSignUp) ...[
-                          _EmailInput(label: 'Emai-l',),
-                          _PasswordInput(label: 'Senha',
-                            controller: state.passwordController,),
+                          _EmailInput(
+                            label: 'Emai-l',
+                          ),
+                          _PasswordInput(
+                            label: 'Senha',
+                            controller: state.passwordController,
+                          ),
                         ],
                         Focus(
                           child: Padding(
@@ -108,7 +113,8 @@ class Login extends StatelessWidget {
                                 state.isSignUp
                                     ? 'Já tenho conta.'
                                     : 'Não tenho login.',
-                                style: TextStyle(color: Colors.red,
+                                style: TextStyle(
+                                    color: Colors.red,
                                     decoration: TextDecoration.underline),
                               ),
                               onTap: () {
@@ -131,26 +137,29 @@ class Login extends StatelessWidget {
                                 ),
                               ),
                               Expanded(
-                                child: _ConfirmButton(
-                                  onPressed: () async {
-                                    if(!state.isSignUp) {
-                                      bool result = await state.saveForm();
-                                      if (result) {
-                                        context.go('/home');
-                                      } else {
-                                        showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialogUtil(
-                                                title: 'Erro',
-                                                content: 'Credênciais inválidas!',
-                                              );
-                                            }
-                                        );
-                                      }
+                                child: _ConfirmButton(onPressed: () async {
+                                  final user = User(
+                                    name: state.nameController.text,
+                                    email: state.emailController.text,
+                                    password: state.passwordController.text,
+                                  );
+                                  bool result =
+                                      await state.saveForm(user: user);
+                                  if (result) {
+                                    if(context.mounted) {
+                                      context.go('/home');
                                     }
+                                  } else if(context.mounted) {
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialogUtil(
+                                            title: 'Erro',
+                                            content: 'Credênciais inválidas!',
+                                          );
+                                        });
                                   }
-                                ),
+                                }),
                               ),
                             ],
                           ),
@@ -207,7 +216,10 @@ class _PasswordInput extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(color: Colors.lightBlue.shade900),),
+          Text(
+            label,
+            style: TextStyle(color: Colors.lightBlue.shade900),
+          ),
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -245,7 +257,10 @@ class _EmailInput extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label , style: TextStyle(color: Colors.lightBlue.shade900),),
+          Text(
+            label,
+            style: TextStyle(color: Colors.lightBlue.shade900),
+          ),
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -271,7 +286,6 @@ class _EmailInput extends StatelessWidget {
 }
 
 class _NameInput extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     var state = Provider.of<LoginState>(context);
@@ -280,7 +294,10 @@ class _NameInput extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Digite seu nome:' , style: TextStyle(color: Colors.lightBlue.shade900),),
+          Text(
+            'Digite seu nome:',
+            style: TextStyle(color: Colors.lightBlue.shade900),
+          ),
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -296,7 +313,7 @@ class _NameInput extends StatelessWidget {
               decoration: InputDecoration(
                 enabledBorder: InputBorder.none,
               ),
-              controller: state.nomeController,
+              controller: state.nameController,
             ),
           ),
         ],
@@ -319,7 +336,7 @@ class _CancelButton extends StatelessWidget {
       onPressed: onPressed,
       child: Text(
         'Cancelar',
-          style: TextStyle(color: Colors.white),
+        style: TextStyle(color: Colors.white),
       ),
     );
   }
@@ -337,7 +354,10 @@ class _ConfirmButton extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.lightBlue.shade900,
       ),
-      child: Text('Confirmar'   , style: TextStyle(color: Colors.white),),
+      child: Text(
+        'Confirmar',
+        style: TextStyle(color: Colors.white),
+      ),
       onPressed: () {
         if (state._formKey.currentState!.validate()) {
           onPressed();
@@ -352,14 +372,8 @@ String? validator(String? value) {
     return 'Precisa preencher o campo';
   }
 
-  if (value
-      .trim()
-      .length < 3) {
+  if (value.trim().length < 3) {
     return 'Minimo de caracteres é 3';
   }
   return null;
 }
-
-
-
-
