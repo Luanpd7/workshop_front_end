@@ -164,14 +164,13 @@ class _Drawer extends StatelessWidget {
             leading: Icon(Icons.photo_filter),
             title: Text("Digitalizar documento"),
             onTap: () {
-              context.go("/scanner");
             },
           ),
           ListTile(
             leading: Icon(Icons.settings),
             title: Text("Configurações"),
             onTap: () {
-              context.go("/tarefa");
+              context.go("/settings");
             },
           ),
           ListTile(
