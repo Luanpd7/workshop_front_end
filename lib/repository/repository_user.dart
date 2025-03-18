@@ -9,11 +9,11 @@ abstract class IRepositoryUser {
 
   Future<bool> addNewUser({required User user});
 
-  Future<bool> getLoginUser({required User user});
+  Future<User?> getLoginUser({required User user});
 }
 
 class RepositoryUser implements IRepositoryUser{
-  static const String baseUrl = 'http://localhost:8080';
+  static const String baseUrl = 'http://192.168.1.11:8080';
 
   @override
   Future<bool> addNewUser({
@@ -23,7 +23,7 @@ class RepositoryUser implements IRepositoryUser{
 
     try{
       final response = await http.post(
-        Uri.parse('http://192.168.1.6:8080/add_usuario'),
+        Uri.parse('$baseUrl/add_usuario'),
         headers: {'Content-Type': 'application/json'},
         body: userBody,
       );
@@ -40,24 +40,28 @@ class RepositoryUser implements IRepositoryUser{
 
 
   @override
-  Future<bool> getLoginUser(
+  Future<User?> getLoginUser(
       {  required User user}) async {
     var userBody = jsonEncode(user.toJson());
 
     try {
       final response = await http.post(
-        Uri.parse('http://192.168.1.6:8080/login'),
+        Uri.parse('$baseUrl/login'),
         headers: {'Content-Type': 'application/json'},
         body: userBody,
       );
 
+
       if (response.statusCode == 200) {
-        return true;
+
+        var body = jsonDecode(response.body);
+        var userData = body['user'];
+        return User.fromJson(userData);
       }
-      return false;
+
     } catch (e) {
       _logger.severe('ERROR : $e');
-      return false;
     }
+    return null;
   }
 }

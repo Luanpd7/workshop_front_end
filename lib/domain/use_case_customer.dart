@@ -10,4 +10,5 @@ class UseCaseCustomer {
 
   Future<void> addCustomer(Customer customer, Address address) =>
       repository.addCustomer(customer, address);
+
 }

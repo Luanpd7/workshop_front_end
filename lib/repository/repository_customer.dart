@@ -12,7 +12,7 @@ abstract class IRepositoryCustomer {
 }
 
 class RepositoryCustomer implements IRepositoryCustomer{
-
+  static const String baseUrl = 'http://192.168.1.11:8080';
 
   @override
   Future<void> addCustomer(Customer customer, Address address) async {
@@ -23,7 +23,7 @@ class RepositoryCustomer implements IRepositoryCustomer{
       });
 
       final response = await http.post(
-        Uri.parse('http://192.168.1.6:8080/add_customer'),
+        Uri.parse('$baseUrl/add_customer'),
         headers: {'Content-Type': 'application/json'},
         body:  body,
       );
@@ -36,4 +36,5 @@ if(response.statusCode != 200){
       _logger.severe('Erro ao adicionar cliente: $e');
     }
   }
+
 }

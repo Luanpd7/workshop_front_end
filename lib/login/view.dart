@@ -16,9 +16,18 @@ class LoginState with ChangeNotifier {
 
   final _formKey = GlobalKey<FormState>();
 
+  late User _user;
+
   bool _isSignUp = false;
 
   bool get isSignUp => _isSignUp;
+
+  User get user => _user;
+
+  set user(User value) {
+    _user = value;
+    notifyListeners();
+  }
 
   set isSignUp(bool value) {
     _isSignUp = value;
@@ -33,16 +42,29 @@ class LoginState with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> saveForm({required User user}) async {
-    final repositoryUser = RepositoryUser();
-    final useCaseUser =  UseCaseUser(repositoryUser);
+  Future<bool> saveForm({required User user, required BuildContext context}) async {
+    var state = Provider.of<LoginState>(context, listen:  false);
 
-    return !_isSignUp
-        ? await useCaseUser.getLoginUser(
-           user: user
-          )
-        : await useCaseUser.addNewUser(user: user);
+    final repositoryUser = RepositoryUser();
+    final useCaseUser = UseCaseUser(repositoryUser);
+    final User? userResult;
+
+    if (_isSignUp) {
+      return await useCaseUser.addNewUser(user: user);
+    } else {
+     userResult = await useCaseUser.getLoginUser(user: user);
+
+
+      if (userResult != null) {
+        state.user = userResult;
+        return true;
+      } else {
+        return false;
+      }
+    }
   }
+
+
 }
 
 class Login extends StatelessWidget {
@@ -50,9 +72,7 @@ class Login extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<LoginState>(
-      create: (context) => LoginState(),
-      child: Scaffold(
+    return Scaffold(
         backgroundColor: Colors.lightBlue.shade900,
         body: Center(
           child: Consumer<LoginState>(
@@ -144,12 +164,12 @@ class Login extends StatelessWidget {
                                     password: state.passwordController.text,
                                   );
                                   bool result =
-                                      await state.saveForm(user: user);
+                                      await state.saveForm(user: user, context: context);
                                   if (result) {
-                                    if(context.mounted) {
+                                    if (context.mounted) {
                                       context.go('/home');
                                     }
-                                  } else if(context.mounted) {
+                                  } else if (context.mounted) {
                                     showDialog(
                                         context: context,
                                         builder: (BuildContext context) {
@@ -172,8 +192,7 @@ class Login extends StatelessWidget {
             },
           ),
         ),
-      ),
-    );
+      );
   }
 }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:workshop_front_end/login/view.dart';
 
 
 class HomeState with ChangeNotifier {}
@@ -10,7 +12,7 @@ class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.lightBlue.shade900,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text("Oficina do Paulo"),
         backgroundColor: Colors.blue.shade700,
@@ -83,8 +85,9 @@ class _ItemHome extends StatelessWidget {
               borderRadius: BorderRadius.all(Radius.circular(15)),
               gradient: LinearGradient(
                 colors: [
-                  Colors.grey.withAlpha(10),
-                  Colors.blueGrey,
+                  Colors.blueAccent,
+                  Colors.grey.withAlpha(50),
+
                 ],
               ),
             ),
@@ -131,7 +134,9 @@ class _Drawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var user = Provider.of<LoginState>(context, listen: false).user;
     return Drawer(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
@@ -139,16 +144,11 @@ class _Drawer extends StatelessWidget {
             decoration: BoxDecoration(color: Colors.blue),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.person, size: 40, color: Colors.blue),
-                ),
-                SizedBox(height: 10),
-                Text("Usuário",
+                Text('${user.name}',
                     style: TextStyle(color: Colors.white, fontSize: 18)),
-                Text("email@example.com",
+                Text('${user.email}',
                     style: TextStyle(color: Colors.white70)),
               ],
             ),
@@ -164,14 +164,13 @@ class _Drawer extends StatelessWidget {
             leading: Icon(Icons.photo_filter),
             title: Text("Digitalizar documento"),
             onTap: () {
-              context.go("/scanner");
             },
           ),
           ListTile(
             leading: Icon(Icons.settings),
             title: Text("Configurações"),
             onTap: () {
-              context.go("/tarefa");
+              context.go("/settings");
             },
           ),
           ListTile(

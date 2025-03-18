@@ -9,6 +9,6 @@ class UseCaseUser {
   Future<bool> addNewUser({required User user}) =>
       repository.addNewUser(user: user);
 
-  Future<bool> getLoginUser({required User user}) =>
+  Future<User?> getLoginUser({required User user}) =>
       repository.getLoginUser(user: user);
 }

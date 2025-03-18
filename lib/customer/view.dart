@@ -80,44 +80,41 @@ class _InfoCardCustomer extends StatelessWidget {
             style: theme.textTheme.titleLarge,
           ),
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.blue.shade600,
-            borderRadius: BorderRadius.circular(
-              10,
-            ),
-          ),
+        SizedBox(
           width: double.infinity,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _TextField(
-                header: 'Nome',
-                controller: state.nameController,
-                isRequired: true,
-                validator: validator,
-              ),
-              _TextField(
-                header: 'Sobrenome',
-                controller: state.surnameController,
-              ),
-              _TextField(
-                header: 'Documento',
-                controller: state.documentController,
-                isRequired: true,
-                validator: validator,
-              ),
-              _TextField(
-                header: 'Whatsapp',
-                controller: state.whatsappController,
-                isRequired: true,
-                validator: validator,
-              ),
-              _TextField(
-                header: 'Emai-l',
-                controller: state.emailController,
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _TextField(
+                  header: 'Nome',
+                  controller: state.nameController,
+                  isRequired: true,
+                  validator: validator,
+                ),
+                _TextField(
+                  header: 'Sobrenome',
+                  controller: state.surnameController,
+                ),
+                _TextField(
+                  header: 'Documento',
+                  controller: state.documentController,
+                  isRequired: true,
+                  validator: validator,
+                ),
+                _TextField(
+                  header: 'Whatsapp',
+                  controller: state.whatsappController,
+                  isRequired: true,
+                  validator: validator,
+                ),
+                _TextField(
+                  header: 'Emai-l',
+                  controller: state.emailController,
+                ),
+              ],
+            ),
           ),
         )
       ],
@@ -135,55 +132,52 @@ class _InfoCardAddress extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(
-            vertical: 10,
+            vertical: 20,
           ),
           child: Text(
             'Endereço do cliente',
             style: theme.textTheme.titleLarge,
           ),
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.blue.shade600,
-            borderRadius: BorderRadius.circular(
-              10,
-            ),
-          ),
+        SizedBox(
           width: double.infinity,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _TextField(
-                header: 'CEP',
-                controller: state.cepController,
-                isRequired: true,
-                validator: validator,
-              ),
-              _TextField(
-                header: 'Cidade',
-                controller: state.cityController,
-                isRequired: true,
-                validator: validator,
-              ),
-              _TextField(
-                header: 'Bairro',
-                controller: state.neighborhoodController,
-                isRequired: true,
-                validator: validator,
-              ),
-              _TextField(
-                header: 'Logadradouro',
-                controller: state.roadController,
-                isRequired: true,
-                validator: validator,
-              ),
-              _TextField(
-                header: 'Numero',
-                controller: state.numberController,
-                isRequired: true,
-                validator: validator,
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _TextField(
+                  header: 'CEP',
+                  controller: state.cepController,
+                  isRequired: true,
+                  validator: validator,
+                ),
+                _TextField(
+                  header: 'Cidade',
+                  controller: state.cityController,
+                  isRequired: true,
+                  validator: validator,
+                ),
+                _TextField(
+                  header: 'Bairro',
+                  controller: state.neighborhoodController,
+                  isRequired: true,
+                  validator: validator,
+                ),
+                _TextField(
+                  header: 'Logadradouro',
+                  controller: state.roadController,
+                  isRequired: true,
+                  validator: validator,
+                ),
+                _TextField(
+                  header: 'Numero',
+                  controller: state.numberController,
+                  isRequired: true,
+                  validator: validator,
+                ),
+              ],
+            ),
           ),
         )
       ],
@@ -201,24 +195,21 @@ class _InfoCardObservation extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(
-            vertical: 10,
+            vertical: 20,
           ),
           child: Text(
             'Observações',
             style: theme.textTheme.titleLarge,
           ),
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.blue.shade600,
-            borderRadius: BorderRadius.circular(
-              10,
-            ),
-          ),
+        SizedBox(
           width: double.infinity,
-          child: _TextField(
-            header: 'Observações',
-            controller: state.observationController,
+          child: Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: _TextField(
+              header: 'Observações',
+              controller: state.observationController,
+            ),
           ),
         )
       ],
@@ -244,35 +235,34 @@ class _TextField extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.all(18.0),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            spacing: 5,
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(
-                header,
-                style: theme.textTheme.labelSmall!
-                    .copyWith(color: theme.disabledColor),
-              ),
-              if (isRequired == true)
+          TextFormField(
+          decoration: InputDecoration(
+            enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.blue.shade700, width: 1), borderRadius: BorderRadius.all(Radius.circular(15)) ),
+            label:  Row(
+              spacing: 5,
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
                 Text(
-                  '*',
-                  style:
-                      theme.textTheme.labelLarge!.copyWith(color: Colors.red),
+                  header,
+                  style: theme.textTheme.labelSmall!
+          .copyWith(color: theme.disabledColor),
                 ),
-            ],
-          ),
-          SizedBox(
-            height: 30,
-            child: TextFormField(
-              validator: validator,
-              cursorHeight: 10,
-              controller: controller,
+                if (isRequired == true)
+                  Text(
+                    '*',
+                    style:
+                    theme.textTheme.labelLarge!.copyWith(color: Colors.red),
+                  ),
+              ],
             ),
+          ),
+            validator: validator,
+            controller: controller,
           ),
         ],
       ),

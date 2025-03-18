@@ -1,8 +1,9 @@
 class User {
 
-  User({ this.email,  this.password,  this.name});
+  User({this.id, this.email,  this.password,  this.name});
 
 
+  final int? id;
   final String? name;
   final String? email;
   final String? password;
@@ -15,8 +16,16 @@ class User {
     };
   }
 
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'],
+      name: json['name'],
+      email: json['email'],
+    );
+  }
+
   @override
   String toString() {
-    return 'User{name: $name, email: $email, password: $password}';
+    return 'User{id $id, name: $name, email: $email, password: $password}';
   }
 }

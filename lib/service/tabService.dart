@@ -10,7 +10,7 @@ class ServiceTab extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: Colors.lightBlue.shade900,
+        backgroundColor:  Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           title: const Text("Registrar serviço"),
           backgroundColor: Colors.blue.shade700,
