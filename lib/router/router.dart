@@ -1,4 +1,5 @@
 import 'package:go_router/go_router.dart';
+import 'package:workshop_front_end/customer/list_customer.dart';
 import 'package:workshop_front_end/login/view.dart';
 import 'package:workshop_front_end/setting/view.dart';
 import '../customer/view.dart';
@@ -16,6 +17,10 @@ class RouterApp{
       GoRoute(
         path: '/home',
         builder: (context, state) => Home(),
+      ),
+      GoRoute(
+        path: '/listCustomers',
+        builder: (context, state) => ListCustomer(),
       ),
       GoRoute(
         path: '/registerService',

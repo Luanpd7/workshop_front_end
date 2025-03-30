@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:workshop_front_end/repository/api_config.dart';
 import 'package:workshop_front_end/router/router.dart';
 import 'package:http/http.dart' as http;
 import 'package:workshop_front_end/setting/view.dart';
@@ -24,8 +25,9 @@ final ThemeData darkTheme = ThemeData(
 
 void main() async {
   try {
+    final baseURl = ApiConfig().baseUrl;
     final response = await http.get(
-      Uri.parse('http://192.168.1.11:8080/get_servidor'),
+      Uri.parse('$baseURl/get_servidor'),
       headers: {'Content-Type': 'application/json'},
     );
 

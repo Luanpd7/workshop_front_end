@@ -20,11 +20,11 @@ class RegisterCustomerState with ChangeNotifier {
 
   final _formKey = GlobalKey<FormState>();
 
-  Future<void> saveForm(Customer customer, Address address) async {
+  Future<void> saveForm(Customer customer) async {
     final repository = RepositoryCustomer();
     final useCaseCustomer = UseCaseCustomer(repository);
 
-    await useCaseCustomer.addCustomer(customer, address);
+    await useCaseCustomer.addCustomer(customer);
 
 
   }
@@ -279,23 +279,23 @@ class _SaveButton extends StatelessWidget {
       onPressed: () async {
         if (state._formKey.currentState!.validate()) {
           final customer = Customer(
-            state.nameController.text,
-            state.surnameController.text,
-            state.whatsappController.text,
-            state.emailController.text,
-            state.documentController.text,
-            state.observationController.text,
+           name:  state.nameController.text,
+           surname:  state.surnameController.text,
+           whatsapp:  state.whatsappController.text,
+           email:  state.emailController.text,
+           document:  state.documentController.text,
+          observation:   state.observationController.text,
+            address: Address(
+              cep: state.cepController.text,
+              city: state.cityController.text,
+              neighborhood:  state.neighborhoodController.text,
+              road:  state.roadController.text,
+              number:  state.numberController.text,
+            ),
           );
 
-          final address = Address(
-            state.cepController.text,
-            state.cityController.text,
-            state.neighborhoodController.text,
-            state.roadController.text,
-            state.numberController.text,
-          );
 
-          await state.saveForm( customer,  address);
+          await state.saveForm( customer);
         }
       },
     );

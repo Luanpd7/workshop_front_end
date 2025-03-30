@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import '../login/entities/login.dart';
+import 'api_config.dart';
 
 final Logger _logger = Logger('RepositoryUser');
 
@@ -13,7 +14,8 @@ abstract class IRepositoryUser {
 }
 
 class RepositoryUser implements IRepositoryUser{
-  static const String baseUrl = 'http://192.168.1.11:8080';
+  final baseURL = ApiConfig().baseUrl;
+
 
   @override
   Future<bool> addNewUser({
@@ -23,7 +25,7 @@ class RepositoryUser implements IRepositoryUser{
 
     try{
       final response = await http.post(
-        Uri.parse('$baseUrl/add_usuario'),
+        Uri.parse('$baseURL/add_usuario'),
         headers: {'Content-Type': 'application/json'},
         body: userBody,
       );
@@ -46,7 +48,7 @@ class RepositoryUser implements IRepositoryUser{
 
     try {
       final response = await http.post(
-        Uri.parse('$baseUrl/login'),
+        Uri.parse('$baseURL/login'),
         headers: {'Content-Type': 'application/json'},
         body: userBody,
       );

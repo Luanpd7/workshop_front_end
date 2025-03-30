@@ -73,7 +73,7 @@ class Login extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.lightBlue.shade900,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
           child: Consumer<LoginState>(
             builder: (context, state, _) {
@@ -82,7 +82,13 @@ class Login extends StatelessWidget {
                 child: Container(
                   width: 380,
                   decoration: BoxDecoration(
-                    color: Colors.lightBlue.shade100,
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.blueAccent,
+                        Colors.grey.withAlpha(10),
+
+                      ],
+                    ),
                     borderRadius: BorderRadius.all(
                       Radius.circular(10.0),
                     ),
@@ -212,11 +218,12 @@ class _TitleLogin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: 25.0, bottom: 10.0),
       child: Text(
         label,
-        style: TextStyle(fontSize: 25, color: Colors.lightBlue.shade900),
+        style: theme.textTheme.titleLarge,
       ),
     );
   }
@@ -230,6 +237,7 @@ class _PasswordInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(14.0),
       child: Column(
@@ -237,11 +245,11 @@ class _PasswordInput extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(color: Colors.lightBlue.shade900),
+            style: theme.textTheme.titleSmall,
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Colors.white24,
               borderRadius: BorderRadius.circular(5.0),
               border: Border.all(
                 width: 0.3,
@@ -270,6 +278,7 @@ class _EmailInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     var state = Provider.of<LoginState>(context);
     return Padding(
       padding: const EdgeInsets.all(14.0),
@@ -278,11 +287,11 @@ class _EmailInput extends StatelessWidget {
         children: [
           Text(
             label,
-            style: TextStyle(color: Colors.lightBlue.shade900),
+            style: theme.textTheme.titleSmall,
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Colors.white24,
               borderRadius: BorderRadius.circular(5.0),
               border: Border.all(
                 width: 0.3,
@@ -307,6 +316,8 @@ class _EmailInput extends StatelessWidget {
 class _NameInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+
+    final theme = Theme.of(context);
     var state = Provider.of<LoginState>(context);
     return Padding(
       padding: const EdgeInsets.all(14.0),
@@ -315,11 +326,11 @@ class _NameInput extends StatelessWidget {
         children: [
           Text(
             'Digite seu nome:',
-            style: TextStyle(color: Colors.lightBlue.shade900),
+            style: theme.textTheme.titleSmall,
           ),
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Colors.white24,
               borderRadius: BorderRadius.circular(5.0),
               border: Border.all(
                 width: 0.3,
@@ -348,6 +359,8 @@ class _CancelButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final theme = Theme.of(context);
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.lightBlue.shade900,
@@ -355,7 +368,7 @@ class _CancelButton extends StatelessWidget {
       onPressed: onPressed,
       child: Text(
         'Cancelar',
-        style: TextStyle(color: Colors.white),
+        style: theme.textTheme.titleSmall,
       ),
     );
   }
@@ -368,6 +381,8 @@ class _ConfirmButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    final theme = Theme.of(context);
     var state = Provider.of<LoginState>(context);
     return ElevatedButton(
       style: ElevatedButton.styleFrom(
@@ -375,7 +390,7 @@ class _ConfirmButton extends StatelessWidget {
       ),
       child: Text(
         'Confirmar',
-        style: TextStyle(color: Colors.white),
+        style: theme.textTheme.titleSmall,
       ),
       onPressed: () {
         if (state._formKey.currentState!.validate()) {

@@ -4,37 +4,66 @@ import 'package:workshop_front_end/customer/entities/address.dart';
 import 'package:workshop_front_end/customer/entities/customer.dart';
 import 'package:http/http.dart' as http;
 
+import 'api_config.dart';
+
 final Logger _logger = Logger('RepositoryCustomer');
 
 abstract class IRepositoryCustomer {
+  Future<void> addCustomer(Customer customer);
 
-  Future<void> addCustomer(Customer customer, Address address);
+  Future<List<Customer>> listCustomers();
 }
 
-class RepositoryCustomer implements IRepositoryCustomer{
-  static const String baseUrl = 'http://192.168.1.11:8080';
+class RepositoryCustomer implements IRepositoryCustomer {
+  final baseURL = ApiConfig().baseUrl;
 
   @override
-  Future<void> addCustomer(Customer customer, Address address) async {
-    try{
+  Future<void> addCustomer(Customer customer) async {
+    try {
       final body = jsonEncode({
-        "Customer" : customer.toJson(),
-        "Address" : address.toJson(),
+        "Customer": customer.toJson(),
       });
 
       final response = await http.post(
-        Uri.parse('$baseUrl/add_customer'),
+        Uri.parse('$baseURL/add_customer'),
         headers: {'Content-Type': 'application/json'},
-        body:  body,
+        body: body,
       );
 
-if(response.statusCode != 200){
-  throw Exception();
-}
-
-    }catch (e){
+      if (response.statusCode != 200) {
+        throw Exception();
+      }
+    } catch (e) {
       _logger.severe('Erro ao adicionar cliente: $e');
     }
   }
 
+
+  @override
+  Future<List<Customer>> listCustomers() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseURL/listCustomers'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception();
+      }
+
+      final data = jsonDecode(response.body);
+      List<Customer> list = [];
+
+      print('-------------------------------- 1');
+      for (var i in data) {
+        var customer = Customer.fromJson(i);
+        list.add(customer);
+      }
+
+      return list;
+    } catch (e) {
+      _logger.severe('Erro ao listar clientes: $e');
+    }
+    return [];
+  }
 }

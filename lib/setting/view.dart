@@ -8,7 +8,7 @@ class SettingsState with ChangeNotifier {
 
   ThemeMode get themeMode => _themeMode;
 
-  ThemeProvider() {
+  themeProvider() {
     _loadTheme();
   }
 
@@ -55,9 +55,12 @@ class Settings extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Tema'),
-                    Text('Escolha o Tema', style: TextStyle(fontSize: 18)),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 25, top: 10),
+                      child: Text('Tema', style: Theme.of(context).textTheme.labelLarge,),
+                    ),
                     RadioListTile(
                       title: Text('Claro'),
                       value: ThemeMode.light,
@@ -82,6 +85,7 @@ class Settings extends StatelessWidget {
                         themeProvider.setTheme(value!);
                       },
                     ),
+                    Divider()
                   ],
                 )
               ],

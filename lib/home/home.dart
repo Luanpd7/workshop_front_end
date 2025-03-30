@@ -48,6 +48,13 @@ class _ItemsHome extends StatelessWidget {
               context.push('/registerService');
             }),
         _ItemHome(
+            label: 'Lista de clientes',
+            icon: Icons.supervised_user_circle,
+            subtitle: 'Visualizar clientes que já foram registrados',
+            onPressed: () {
+              context.push('/listCustomers');
+            }),
+        _ItemHome(
             label: 'Histórico Serviços',
             icon: Icons.account_balance,
             subtitle: 'Visualizar serviços que já foram finalizados',
@@ -82,7 +89,7 @@ class _ItemHome extends StatelessWidget {
             height: 100,
             width: double.infinity,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(15)),
+              borderRadius: BorderRadius.all(Radius.circular(15),),
               gradient: LinearGradient(
                 colors: [
                   Colors.blueAccent,
