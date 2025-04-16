@@ -12,6 +12,8 @@ abstract class IRepositoryCustomer {
   Future<void> addCustomer(Customer customer);
 
   Future<List<Customer>> listCustomers();
+
+  Future<bool> deleteCustomer(int id);
 }
 
 class RepositoryCustomer implements IRepositoryCustomer {
@@ -51,7 +53,6 @@ class RepositoryCustomer implements IRepositoryCustomer {
 
       final data = jsonDecode(response.body);
       List<Customer> list = [];
-      print('------------------------------------ data${data}');
       for (var i in data) {
         var customer = Customer.fromJson(i);
         list.add(customer);
@@ -62,5 +63,27 @@ class RepositoryCustomer implements IRepositoryCustomer {
       _logger.severe('Erro ao listar clientes: $e');
     }
     return [];
+  }
+
+  @override
+  Future<bool> deleteCustomer(int id) async {
+    try {
+
+      var body = jsonEncode({"id": id});
+
+      final response = await http.delete(
+        Uri.parse('$baseURL/delete_customer'),
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      if (response.statusCode != 200) {
+        return false;
+      }
+      return true;
+    } catch (e) {
+      _logger.severe('Erro ao adicionar cliente: $e');
+      return false;
+    }
   }
 }

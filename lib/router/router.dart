@@ -10,7 +10,7 @@ class RouterApp {
   final GoRouter router = GoRouter(
     routes: [
       GoRoute(
-        path: '/s',
+        path: '/',
         builder: (context, state) => Login(),
       ),
       GoRoute(
@@ -18,9 +18,10 @@ class RouterApp {
         builder: (context, state) => Home(),
       ),
       GoRoute(
-        path: '/',
+        path: '/listCustomers',
         builder: (context, state) => ListCustomer(),
       ),
+
       GoRoute(
         path: '/registerService',
         builder: (context, state) => ServiceTab(),

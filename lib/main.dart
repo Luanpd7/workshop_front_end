@@ -5,6 +5,7 @@ import 'package:workshop_front_end/router/router.dart';
 import 'package:http/http.dart' as http;
 import 'package:workshop_front_end/setting/view.dart';
 
+import 'customer/view.dart';
 import 'login/view.dart';
 
 final ThemeData lightTheme = ThemeData(
@@ -46,6 +47,9 @@ void main() async {
         ),
         ChangeNotifierProvider<SettingsState>(
           create: (context) => SettingsState(),
+        ),
+        ChangeNotifierProvider<CustomerState>(
+          create: (context) => CustomerState(),
         ),
       ],
       child: const MyApp(),

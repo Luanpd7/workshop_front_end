@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import 'package:workshop_front_end/customer/entities/address.dart';
 import 'package:workshop_front_end/domain/use_case_customer.dart';
 import 'package:workshop_front_end/repository/repository_customer.dart';
 import 'entities/customer.dart';
 
-class RegisterCustomerState with ChangeNotifier {
+class CustomerState with ChangeNotifier {
+
+  CustomerState({Customer? customer}) {
+    _init(customer: customer);
+  }
+
   TextEditingController nameController = TextEditingController();
   TextEditingController surnameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
@@ -20,42 +26,80 @@ class RegisterCustomerState with ChangeNotifier {
 
   final _formKey = GlobalKey<FormState>();
 
+  Future<void> _init({Customer? customer}) async{
+    if(customer != null){
+      nameController.text = customer.name ?? '';
+      surnameController.text = customer.surname ?? '';
+      emailController.text = customer.email ?? '';
+      documentController.text = customer.document ?? '';
+      whatsappController.text = customer.whatsapp ?? '';
+      observationController.text = customer.observation ?? '';
+      cepController.text = customer.address?.cep ?? '';
+      cityController.text = customer.address?.city ?? '';
+      roadController.text = customer.address?.road ?? '';
+      numberController.text = customer.address?.number ?? '';
+      neighborhoodController.text = customer.address?.neighborhood ?? '';
+
+    }
+  }
+
   Future<void> saveForm(Customer customer) async {
     final repository = RepositoryCustomer();
     final useCaseCustomer = UseCaseCustomer(repository);
 
     await useCaseCustomer.addCustomer(customer);
 
+  }
 
+  Future<bool> onPressedDeleteCustomer({required int id})async{
+    final repository = RepositoryCustomer();
+    final useCaseCustomer = UseCaseCustomer(repository);
+
+   final result =  await useCaseCustomer.deleteCustomer(id);
+
+    return result;
+  }
+
+  void clearForm() {
+    nameController.clear();
+    surnameController.clear();
+    emailController.clear();
+    documentController.clear();
+    whatsappController.clear();
+    observationController.clear();
+    cepController.clear();
+    cityController.clear();
+    roadController.clear();
+    numberController.clear();
+    neighborhoodController.clear();
   }
 }
 
 class RegisterCustomer extends StatelessWidget {
-  const RegisterCustomer({super.key});
+  const RegisterCustomer({this.customer});
 
+  final Customer? customer;
   @override
   Widget build(BuildContext context) {
+     Provider.of<CustomerState>(context)._init(customer: customer);
     return  Center(
-        child: ChangeNotifierProvider<RegisterCustomerState>(
-          create: (context) => RegisterCustomerState(),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(18.0),
-              child: Consumer<RegisterCustomerState>(
-                builder: (context, state, Widget? _) {
-                  return Form(
-                    key: state._formKey,
-                    child: Column(
-                      children: [
-                        _InfoCardCustomer(),
-                        _InfoCardAddress(),
-                        _InfoCardObservation(),
-                        _SaveButton(),
-                      ],
-                    ),
-                  );
-                },
-              ),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(18.0),
+            child: Consumer<CustomerState>(
+              builder: (context, state, Widget? _) {
+                return Form(
+                  key: state._formKey,
+                  child: Column(
+                    children: [
+                      _InfoCardCustomer(),
+                      _InfoCardAddress(),
+                      _InfoCardObservation(),
+                      _SaveButton(),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -64,10 +108,11 @@ class RegisterCustomer extends StatelessWidget {
 }
 
 class _InfoCardCustomer extends StatelessWidget {
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final state = Provider.of<RegisterCustomerState>(context, listen: false);
+    final state = Provider.of<CustomerState>(context, listen: false);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -125,7 +170,7 @@ class _InfoCardCustomer extends StatelessWidget {
 class _InfoCardAddress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<RegisterCustomerState>(context, listen: false);
+    final state = Provider.of<CustomerState>(context, listen: false);
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,7 +233,7 @@ class _InfoCardAddress extends StatelessWidget {
 class _InfoCardObservation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<RegisterCustomerState>(context, listen: false);
+    final state = Provider.of<CustomerState>(context, listen: false);
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,7 +318,7 @@ class _TextField extends StatelessWidget {
 class _SaveButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<RegisterCustomerState>(context, listen: false);
+    final state = Provider.of<CustomerState>(context, listen: false);
     return ElevatedButton(
       child: Text('Salvar'),
       onPressed: () async {
@@ -296,6 +341,17 @@ class _SaveButton extends StatelessWidget {
 
 
           await state.saveForm( customer);
+
+          state.clearForm();
+          Fluttertoast.showToast(
+              msg: "Cadastrado com sucesso!",
+              backgroundColor: Colors.green,
+              textColor: Colors.white,
+            );
+            Navigator.pop(context);
+
+
+
         }
       },
     );
