@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
+import 'package:workshop_front_end/customer/entities/address.dart';
 import 'package:workshop_front_end/customer/entities/customer.dart';
 
 import 'api_config.dart';
@@ -14,6 +15,10 @@ abstract class IRepositoryCustomer {
   Future<List<Customer>> listCustomers();
 
   Future<bool> deleteCustomer(int id);
+
+  Future<Address?> searchCEP(String cep);
+
+  Future<List<String>> getAllDocuments();
 }
 
 class RepositoryCustomer implements IRepositoryCustomer {
@@ -37,6 +42,7 @@ class RepositoryCustomer implements IRepositoryCustomer {
       }
     } catch (e) {
       _logger.severe('Erro ao adicionar cliente: $e');
+      rethrow;
     }
   }
 
@@ -68,7 +74,6 @@ class RepositoryCustomer implements IRepositoryCustomer {
   @override
   Future<bool> deleteCustomer(int id) async {
     try {
-
       var body = jsonEncode({"id": id});
 
       final response = await http.delete(
@@ -85,5 +90,54 @@ class RepositoryCustomer implements IRepositoryCustomer {
       _logger.severe('Erro ao adicionar cliente: $e');
       return false;
     }
+  }
+
+  @override
+  Future<Address?> searchCEP(String cep) async {
+    try {
+      final response =
+          await http.get(Uri.parse('https://viacep.com.br/ws/$cep/json/'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        final address = Address(
+          cep: data['cep'],
+          road: data['logradouro'],
+          neighborhood: data['bairro'],
+          city: data['localidade'],
+        );
+        return address;
+      }
+
+      return null;
+    } catch (e) {
+      _logger.severe('Erro ao buscar CEP: $e');
+      return null;
+    }
+  }
+
+  @override
+  Future<List<String>> getAllDocuments() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseURL/listCustomers'),
+        headers: {'Content-Type': 'application/json'},
+      );
+      if (response.statusCode != 200) {
+        throw Exception();
+      }
+
+      final data = jsonDecode(response.body);
+      List<String> list = [];
+      for (var i in data) {
+        final result = i['document'];
+        list.add(result);
+      }
+
+      return list;
+    } catch (e) {
+      _logger.severe('Erro ao listar clientes: $e');
+    }
+    return [];
   }
 }

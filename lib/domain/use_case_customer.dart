@@ -15,4 +15,8 @@ class UseCaseCustomer {
   Future<List<Customer>> listCustomers() => repository.listCustomers();
 
   Future<bool> deleteCustomer(int id) => repository.deleteCustomer(id);
+
+  Future<Address?> searchCEP(String cep) => repository.searchCEP(cep);
+
+  Future<List<String>> getAllDocuments() => repository.getAllDocuments();
 }

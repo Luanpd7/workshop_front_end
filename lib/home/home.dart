@@ -54,7 +54,7 @@ class _ItemsHome extends StatelessWidget {
               context.push('/listCustomers');
             }),
         _ItemHome(
-            label: 'Histórico Serviços',
+            label: 'Histórico de Serviços',
             icon: Icons.account_balance,
             subtitle: 'Visualizar serviços que já foram finalizados',
             onPressed: () {}),
@@ -83,50 +83,48 @@ class _ItemHome extends StatelessWidget {
       onTap: onPressed,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-        child: Expanded(
-          child: Container(
-            height: 100,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.all(
-                Radius.circular(15),
-              ),
-              gradient: LinearGradient(
-                colors: [
-                  Colors.blueAccent,
-                  Colors.grey.withAlpha(50),
-                ],
-              ),
+        child: Container(
+          height: 100,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.all(
+              Radius.circular(15),
             ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          label,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        Icon(
-                          icon,
-                          size: 30,
-                        ),
-                      ],
-                    ),
-                    Text(
-                      subtitle,
-                      style: theme.textTheme.labelSmall!
-                          .copyWith(color: theme.disabledColor),
-                    ),
-                  ],
-                ),
+            gradient: LinearGradient(
+              colors: [
+                Colors.blueAccent,
+                Colors.grey.withAlpha(50),
+              ],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18.0),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        label,
+                        style: Theme.of(context).textTheme.headlineMedium,
+                      ),
+                      Icon(
+                        icon,
+                        size: 30,
+                      ),
+                    ],
+                  ),
+                  Text(
+                    subtitle,
+                    style: theme.textTheme.labelSmall!
+                        .copyWith(color: theme.disabledColor),
+                  ),
+                ],
               ),
             ),
           ),

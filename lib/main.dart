@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:workshop_front_end/repository/api_config.dart';
 import 'package:workshop_front_end/router/router.dart';
 import 'package:http/http.dart' as http;
 import 'package:workshop_front_end/setting/view.dart';
-
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart';
 import 'customer/view.dart';
 import 'login/view.dart';
+
+final Logger _logger = Logger('RepositoryCustomer');
 
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
@@ -33,10 +37,10 @@ void main() async {
     );
 
     if (response.statusCode == 200) {
-      print('Servidor rodando no front end');
+      _logger.info('Servidor rodando no front');
     }
   } catch (e) {
-    print('Não rodou $e');
+    _logger.severe('Não rodou $e');
   }
   runApp(
     MultiProvider(
@@ -65,6 +69,13 @@ class MyApp extends StatelessWidget {
     final themeProvider = Provider.of<SettingsState>(context);
 
     return MaterialApp.router(
+      // localizationsDelegates: const [
+      //   AppLocalizations.delegate,
+      //   GlobalMaterialLocalizations.delegate,
+      //   GlobalWidgetsLocalizations.delegate,
+      //   GlobalCupertinoLocalizations.delegate,
+      // ],
+     // supportedLocales: AppLocalizations.supportedLocales,
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
       darkTheme: darkTheme,

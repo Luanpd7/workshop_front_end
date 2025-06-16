@@ -109,7 +109,7 @@ class Login extends StatelessWidget {
                         ),
                       ),
                       if (state.isSignUp) ...[
-                        _NameInput(),
+                        _NameInput(label : 'Digite seu nome:'),
                         _EmailInput(label: 'Digite seu e-mail:'),
                         _PasswordInput(
                           label: 'Digite uma nova senha:',
@@ -121,8 +121,8 @@ class Login extends StatelessWidget {
                         ),
                       ],
                       if (!state.isSignUp) ...[
-                        _EmailInput(
-                          label: 'Emai-l',
+                        _NameInput(
+                          label: 'Usuário',
                         ),
                         _PasswordInput(
                           label: 'Senha',
@@ -312,6 +312,10 @@ class _EmailInput extends StatelessWidget {
 }
 
 class _NameInput extends StatelessWidget {
+  const _NameInput({required this.label});
+
+  final String label;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -322,7 +326,7 @@ class _NameInput extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Digite seu nome:',
+            label,
             style: theme.textTheme.titleSmall,
           ),
           Container(
@@ -336,7 +340,6 @@ class _NameInput extends StatelessWidget {
             ),
             child: TextFormField(
               validator: validator,
-              keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(
                 enabledBorder: InputBorder.none,
               ),
