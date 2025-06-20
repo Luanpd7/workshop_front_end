@@ -40,9 +40,9 @@ class _ItemsHome extends StatelessWidget {
     return Column(
       children: [
         _ItemHome(
-            label: 'Serviços',
+            label: 'Registro de serviço',
             icon: Icons.add,
-            subtitle: 'Registrar, editar ou visualizar serviços ativos',
+            subtitle: 'Registrar cliente e serviço',
             onPressed: () {
               context.push('/registerService');
             }),
@@ -54,9 +54,9 @@ class _ItemsHome extends StatelessWidget {
               context.push('/listCustomers');
             }),
         _ItemHome(
-            label: 'Histórico de Serviços',
+            label: 'Lista de Serviços',
             icon: Icons.account_balance,
-            subtitle: 'Visualizar serviços que já foram finalizados',
+            subtitle: 'Visualizar serviços em andamento ou concluídos',
             onPressed: () {}),
       ],
     );

@@ -6,14 +6,19 @@ import 'package:workshop_front_end/customer/entities/address.dart';
 import 'package:workshop_front_end/domain/use_case_customer.dart';
 import 'package:workshop_front_end/repository/repository_customer.dart';
 import 'package:workshop_front_end/util/mask.dart';
+import '../service/entities/service.dart';
 import '../util/modal.dart';
 import 'entities/customer.dart';
 import 'list_customer.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
-class CustomerState with ChangeNotifier {
-  CustomerState({Customer? customer}) {
+class ServiceState with ChangeNotifier {
+  ServiceState({Customer? customer}) {
     _init(customer: customer);
   }
+
+  File? _imageFile;
 
   TextEditingController nameController = TextEditingController();
   TextEditingController surnameController = TextEditingController();
@@ -27,7 +32,17 @@ class CustomerState with ChangeNotifier {
   TextEditingController numberController = TextEditingController();
   TextEditingController neighborhoodController = TextEditingController();
 
-  final _formKey = GlobalKey<FormState>();
+  /// controller of service form
+  TextEditingController observationServiceController = TextEditingController();
+  TextEditingController partController = TextEditingController();
+  TextEditingController markController = TextEditingController();
+  TextEditingController priceUnitaryController = TextEditingController();
+  TextEditingController quantityPartController = TextEditingController();
+
+  List<Service> observations = [];
+  List<Service> purchasePart = [];
+
+  final formKey = GlobalKey<FormState>();
 
   bool _isDetails = false;
 
@@ -36,6 +51,14 @@ class CustomerState with ChangeNotifier {
   get isCPF => _isCPF;
 
   get isDetails => _isDetails;
+
+
+  File? get imageFile => _imageFile;
+
+  set imageFile(File? value) {
+    _imageFile = value;
+    notifyListeners();
+  }
 
   set isCPF(value) {
     _isCPF = value;
@@ -59,8 +82,25 @@ class CustomerState with ChangeNotifier {
     }
   }
 
-  Future<bool?> saveForm(Customer customer) async {
+  Future<bool?> saveForm() async {
     try {
+
+      final customer = Customer(
+        name: nameController.text,
+        surname: surnameController.text,
+        whatsapp: whatsappController.text,
+        email: emailController.text,
+        document: documentController.text,
+        observation: observationController.text,
+        address: Address(
+          cep: cepController.text,
+          city: cityController.text,
+          neighborhood: neighborhoodController.text,
+          road: roadController.text,
+          number: numberController.text,
+        ),
+      );
+
       var listDocuments = [];
       final repository = RepositoryCustomer();
       final useCaseCustomer = UseCaseCustomer(repository);
@@ -79,6 +119,8 @@ class CustomerState with ChangeNotifier {
         );
         return null;
       }
+
+
 
       await useCaseCustomer.addCustomer(customer);
 
@@ -139,6 +181,68 @@ class CustomerState with ChangeNotifier {
     numberController.clear();
     neighborhoodController.clear();
   }
+
+
+  void addObservation(Service service){
+    observations.add(service);
+    observationServiceController.clear();
+    notifyListeners();
+  }
+
+  void addPurchasePart(Service service){
+    purchasePart.add(service);
+     partController.clear();
+     markController.clear();
+     priceUnitaryController.clear();
+     quantityPartController.clear();
+    notifyListeners();
+  }
+
+  double? valueTotal(){
+    if(quantityPartController.text.isNotEmpty && priceUnitaryController.text.isNotEmpty){
+      var quantity = int.tryParse(quantityPartController.text);
+      var priceUnitary =
+      double.tryParse(priceUnitaryController.text);
+      var priceTotal = priceUnitary! * quantity!;
+      return priceTotal;
+    }
+    return null;
+  }
+
+  void selectPhoto(BuildContext context) {
+    final picker = ImagePicker();
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Wrap(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.camera_alt),
+            title: const Text('Tirar foto'),
+            onTap: () async {
+              final picked = await picker.pickImage(source: ImageSource.camera);
+              if (picked != null) {
+                  imageFile = File(picked.path);
+              }
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library),
+            title: const Text('Escolher da galeria'),
+            onTap: () async {
+              final picked = await picker.pickImage(source: ImageSource.gallery);
+              if (picked != null) {
+                  imageFile = File(picked.path);
+              }
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
 }
 
 class RegisterCustomer extends StatelessWidget {
@@ -150,24 +254,23 @@ class RegisterCustomer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Provider.of<CustomerState>(context)
+    Provider.of<ServiceState>(context)
         ._init(customer: customer, isDetails: isDetails);
 
     return Center(
       child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(18.0),
-          child: Consumer<CustomerState>(
+          child: Consumer<ServiceState>(
             builder: (context, state, Widget? _) {
               return Form(
-                key: state._formKey,
+                key: state.formKey,
                 child: Column(
                   children: [
                     if (!state.isDetails) _SelectedCustomer(),
                     _InfoCardCustomer(),
                     _InfoCardAddress(),
                     _InfoCardObservation(),
-                    if (!state.isDetails) _SaveButton(),
                   ],
                 ),
               );
@@ -183,7 +286,7 @@ class _InfoCardCustomer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final state = Provider.of<CustomerState>(context, listen: true);
+    final state = Provider.of<ServiceState>(context, listen: true);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -252,7 +355,7 @@ class _InfoCardCustomer extends StatelessWidget {
 class _InfoCardAddress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<CustomerState>(context, listen: true);
+    final state = Provider.of<ServiceState>(context, listen: true);
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,7 +425,7 @@ class _InfoCardAddress extends StatelessWidget {
 class _InfoCardObservation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<CustomerState>(context, listen: true);
+    final state = Provider.of<ServiceState>(context, listen: true);
     final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,7 +482,7 @@ class _TextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final state = Provider.of<CustomerState>(context, listen: true);
+    final state = Provider.of<ServiceState>(context, listen: true);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Column(
@@ -471,66 +574,13 @@ class _TextField extends StatelessWidget {
   }
 }
 
-class _SaveButton extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final state = Provider.of<CustomerState>(context, listen: true);
-    return ElevatedButton(
-      child: Text('Salvar'),
-      style: ButtonStyle(
-        backgroundColor: WidgetStatePropertyAll(
-          Colors.blue.shade700,
-        ),
-      ),
-      onPressed: () async {
-        if (state._formKey.currentState!.validate()) {
-          final customer = Customer(
-            name: state.nameController.text,
-            surname: state.surnameController.text,
-            whatsapp: state.whatsappController.text,
-            email: state.emailController.text,
-            document: state.documentController.text,
-            observation: state.observationController.text,
-            address: Address(
-              cep: state.cepController.text,
-              city: state.cityController.text,
-              neighborhood: state.neighborhoodController.text,
-              road: state.roadController.text,
-              number: state.numberController.text,
-            ),
-          );
-
-          final result = await state.saveForm(customer);
-
-          if (result == true) {
-            state.clearForm();
-            Fluttertoast.showToast(
-              msg: "Cadastrado com sucesso!",
-              backgroundColor: Colors.green,
-              textColor: Colors.white,
-            );
-            if(context.mounted) {
-              Navigator.pop(context);
-            }
-          } else if (result == false) {
-            Fluttertoast.showToast(
-              msg: "Erro ao cadastrar cliente!",
-              backgroundColor: Colors.red,
-              textColor: Colors.white,
-            );
-          }
-        }
-      },
-    );
-  }
-}
 
 class _SelectedCustomer extends StatelessWidget {
   const _SelectedCustomer();
 
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<CustomerState>(context);
+    final state = Provider.of<ServiceState>(context);
 
     return GestureDetector(
       onTap: () async {

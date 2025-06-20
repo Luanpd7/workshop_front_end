@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:provider/provider.dart';
+import 'package:workshop_front_end/service/service_form.dart';
 
 import '../customer/view.dart';
 
@@ -24,11 +27,14 @@ class ServiceTab extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
-          children: [
-            RegisterCustomer(),
-            RegisterCustomer(),
-          ],
+        body: ChangeNotifierProvider(
+          create: (context) => ServiceState(),
+          child: const TabBarView(
+            children: [
+              RegisterCustomer(),
+              RegisterService(),
+            ],
+          ),
         ),
       ),
     );

@@ -52,8 +52,8 @@ void main() async {
         ChangeNotifierProvider<SettingsState>(
           create: (context) => SettingsState(),
         ),
-        ChangeNotifierProvider<CustomerState>(
-          create: (context) => CustomerState(),
+        ChangeNotifierProvider<ServiceState>(
+          create: (context) => ServiceState(),
         ),
       ],
       child: const MyApp(),

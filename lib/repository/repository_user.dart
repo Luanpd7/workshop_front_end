@@ -46,13 +46,14 @@ class RepositoryUser implements IRepositoryUser{
       {  required User user}) async {
     var userBody = jsonEncode(user.toJson());
 
+    print('------------------- ${baseURL}');
+    print('------------------- ${userBody}');
     try {
       final response = await http.post(
         Uri.parse('$baseURL/login'),
         headers: {'Content-Type': 'application/json'},
         body: userBody,
       );
-
 
       if (response.statusCode == 200) {
 

@@ -118,7 +118,7 @@ class ItemList extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (_) => ChangeNotifierProvider(
-              create: (_) => CustomerState(customer: customer),
+              create: (_) => ServiceState(customer: customer),
               child: DetailsCustomer(customer: customer),
             ),
           ),
@@ -176,7 +176,7 @@ class DetailsCustomer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<CustomerState>(context);
+    final state = Provider.of<ServiceState>(context);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -212,7 +212,7 @@ class _ButtonEdit extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<CustomerState>(context);
+    final state = Provider.of<ServiceState>(context);
     return GestureDetector(
       onTap: () {
      state.isDetails = false;
@@ -240,7 +240,7 @@ class _ButtonDelete extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<CustomerState>(context);
+    final state = Provider.of<ServiceState>(context);
     return GestureDetector(
       onTap: () {
         showDialog(
