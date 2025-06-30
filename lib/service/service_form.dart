@@ -7,6 +7,7 @@ import 'package:workshop_front_end/util/mask.dart';
 import '../customer/view.dart';
 import 'entities/service'
     '.dart';
+import 'package:intl/intl.dart';
 
 class RegisterService extends StatelessWidget {
   const RegisterService({this.service, this.isDetails = false});
@@ -124,6 +125,7 @@ class _InfoCardService extends StatelessWidget {
 class _InfoPurchase extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+
     final state = Provider.of<ServiceState>(context, listen: true);
     final theme = Theme.of(context);
     return Column(
@@ -158,7 +160,7 @@ class _InfoPurchase extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                if (state.purchasePart.isNotEmpty) ...[
+                if (state.purchasePart.isEmpty) ...[
                   Text(
                     'Nenhuma peça comprada',
                     style: theme.textTheme.labelSmall!
@@ -172,11 +174,12 @@ class _InfoPurchase extends StatelessWidget {
                       itemCount: state.purchasePart.length,
                       itemBuilder: (context, index) {
                         var item = state.purchasePart[index];
+
                         return _ItemPurchase(
                           mark: item.mark ?? '',
                           part: item.part ?? '',
                           quantity: item.quantity.toString(),
-                          priceTotal: item.priceTotal.toString(),
+                          priceTotal: item.priceTotal?.toStringAsFixed(2) ?? '0.00',
                         );
                       },
                     ),
@@ -446,106 +449,111 @@ class _ButtonSave extends StatelessWidget {
 }
 
 void showVehicleModal(BuildContext context) {
+  final state = Provider.of<ServiceState>(context, listen: false);
   showDialog(
     context: context,
     builder: (context) {
-      final state = Provider.of<ServiceState>(context);
       final theme = Theme.of(context);
-      return AlertDialog(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        title: Text('Adicionar peça '),
-        content: SizedBox(
-          width: 300,
-          height: 300,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _TextField(
-                header: 'Peça',
-                isRequired: true,
-                controller: state.partController,
-                maxLength: 15,
-              ),
-              _TextField(
-                header: 'Marca',
-                isRequired: true,
-                controller: state.markController,
-                maxLength: 25,
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: _TextField(
-                      header: 'Preço uni.',
-                      isRequired: true,
-                      controller: state.priceUnitaryController,
-                      maxLength: 10,
+      return ChangeNotifierProvider.value(
+        value: state,
+        child: AlertDialog(
+          backgroundColor: theme.scaffoldBackgroundColor,
+          title: Text('Adicionar peça '),
+          content: SizedBox(
+            width: 300,
+            height: 300,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _TextField(
+                  header: 'Peça',
+                  isRequired: true,
+                  controller: state.partController,
+                  maxLength: 15,
+                ),
+                _TextField(
+                  header: 'Marca',
+                  isRequired: true,
+                  controller: state.markController,
+                  maxLength: 25,
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _TextField(
+                        header: 'Preço uni.',
+                        isRequired: true,
+                        controller: state.priceUnitaryController,
+                        maxLength: 10,
+                      ),
                     ),
-                  ),
-                  SizedBox(
-                    width: 8,
-                  ),
-                  Expanded(
-                    child: _TextField(
-                      header: 'Qtd.',
-                      isRequired: true,
-                      controller: state.quantityPartController,
-                      maxLength: 10,
+                    SizedBox(
+                      width: 8,
                     ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Text(
-                    'Preço total:',
-                    style: TextStyle(color: theme.disabledColor),
-                  ),
-                  Text(
-                    state.valueTotal,
-
-                  ),
-                ],
-              ),
-            ],
+                    Expanded(
+                      child: _TextField(
+                        header: 'Qtd.',
+                        isRequired: true,
+                        controller: state.quantityPartController,
+                        maxLength: 10,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text(
+                      'Preço total: ',
+                      style: TextStyle(color: theme.disabledColor),
+                    ),
+                    Consumer<ServiceState>(
+                      builder: (__, state, _) {
+                        return Text(
+                            'R\$ ${state.sumValue?.toStringAsFixed(2) ?? '0,00'}');
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
+          actionsAlignment: MainAxisAlignment.spaceAround,
+          actions: [
+            ElevatedButton(
+              style: ButtonStyle(
+                backgroundColor: WidgetStatePropertyAll(
+                  Colors.blueAccent,
+                ),
+              ),
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ButtonStyle(
+                backgroundColor: WidgetStatePropertyAll(
+                  Colors.blueAccent,
+                ),
+              ),
+              onPressed: () {
+                var quantity = int.tryParse(state.quantityPartController.text);
+                var priceUnitary =
+                    double.tryParse(state.priceUnitaryController.text);
+                var priceTotal = priceUnitary! * quantity!;
+                var purchasePart = Service(
+                  part: state.partController.text,
+                  quantity: quantity,
+                  priceTotal: priceTotal,
+                  mark: state.markController.text,
+                );
+
+                state.addPurchasePart(purchasePart);
+                Navigator.pop(context);
+              },
+              child: Text('Adicionar'),
+            ),
+          ],
         ),
-        actionsAlignment: MainAxisAlignment.spaceAround,
-        actions: [
-          ElevatedButton(
-            style: ButtonStyle(
-              backgroundColor: WidgetStatePropertyAll(
-                Colors.blueAccent,
-              ),
-            ),
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ButtonStyle(
-              backgroundColor: WidgetStatePropertyAll(
-                Colors.blueAccent,
-              ),
-            ),
-            onPressed: () {
-              var quantity = int.tryParse(state.quantityPartController.text);
-              var priceUnitary =
-                  double.tryParse(state.priceUnitaryController.text);
-              var priceTotal = priceUnitary! * quantity!;
-              var purchasePart = Service(
-                part: state.partController.text,
-                quantity: quantity,
-                priceTotal: priceTotal,
-                mark: state.markController.text,
-              );
-
-              state.addPurchasePart(purchasePart);
-              Navigator.pop(context);
-            },
-            child: Text('Adicionar'),
-          ),
-        ],
       );
     },
   );
@@ -650,7 +658,7 @@ class _ItemPurchase extends StatelessWidget {
                   ],
                 ),
                 SizedBox(
-                  width: 130,
+                  width: 145,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
@@ -680,12 +688,12 @@ class _ItemPurchase extends StatelessWidget {
                   ],
                 ),
                 SizedBox(
-                  width: 130,
+                  width: 145,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text('Preço total: ', style: TextStyle(fontSize: 15)),
-                      Text(priceTotal,
+                      Text('R\$ $priceTotal',
                           style: TextStyle(color: theme.disabledColor),
                           overflow: TextOverflow.ellipsis),
                     ],

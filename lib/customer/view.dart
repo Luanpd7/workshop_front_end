@@ -15,8 +15,12 @@ import 'package:image_picker/image_picker.dart';
 
 class ServiceState with ChangeNotifier {
   ServiceState({Customer? customer}) {
+    quantityPartController.addListener(sumTotal);
+    priceUnitaryController.addListener(sumTotal);
     _init(customer: customer);
   }
+
+
 
   File? _imageFile;
 
@@ -46,14 +50,24 @@ class ServiceState with ChangeNotifier {
 
   bool _isDetails = false;
 
+
+  double? _sumValue;
+
   bool _isCPF = false;
 
   get isCPF => _isCPF;
+
+  double ? get sumValue => _sumValue;
 
   get isDetails => _isDetails;
 
 
   File? get imageFile => _imageFile;
+
+  set sumValue(double? value) {
+    _sumValue = value;
+    notifyListeners();
+  }
 
   set imageFile(File? value) {
     _imageFile = value;
@@ -80,6 +94,7 @@ class ServiceState with ChangeNotifier {
     } else {
       clearForm();
     }
+    notifyListeners();
   }
 
   Future<bool?> saveForm() async {
@@ -195,19 +210,22 @@ class ServiceState with ChangeNotifier {
      markController.clear();
      priceUnitaryController.clear();
      quantityPartController.clear();
+     sumValue = 0.0;
     notifyListeners();
   }
 
-  double? valueTotal(){
+  void sumTotal(){
     if(quantityPartController.text.isNotEmpty && priceUnitaryController.text.isNotEmpty){
-      var quantity = int.tryParse(quantityPartController.text);
+      var quantity = int.tryParse(quantityPartController.text) ?? 0;
+
       var priceUnitary =
-      double.tryParse(priceUnitaryController.text);
-      var priceTotal = priceUnitary! * quantity!;
-      return priceTotal;
+      double.tryParse(priceUnitaryController.text) ?? 0.0;
+      sumValue = priceUnitary * quantity;
+      notifyListeners();
     }
-    return null;
   }
+
+
 
   void selectPhoto(BuildContext context) {
     final picker = ImagePicker();
