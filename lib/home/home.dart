@@ -56,7 +56,7 @@ class _ItemsHome extends StatelessWidget {
         _ItemHome(
             label: 'Lista de Serviços',
             icon: Icons.account_balance,
-            subtitle: 'Visualizar serviços em andamento ou concluídos',
+            subtitle: 'Visualizar serviços em andamentos ou concluídos',
             onPressed: () {}),
       ],
     );

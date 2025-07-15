@@ -6,7 +6,10 @@ import 'package:workshop_front_end/customer/entities/address.dart';
 import 'package:workshop_front_end/domain/use_case_customer.dart';
 import 'package:workshop_front_end/repository/repository_customer.dart';
 import 'package:workshop_front_end/util/mask.dart';
+import '../domain/use_case_service.dart';
+import '../repository/repository_vehicle.dart';
 import '../service/entities/service.dart';
+import '../service/entities/vehicle.dart';
 import '../util/modal.dart';
 import 'entities/customer.dart';
 import 'list_customer.dart';
@@ -14,13 +17,19 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
 class ServiceState with ChangeNotifier {
-  ServiceState({Customer? customer}) {
+  ServiceState({Customer? customer, bool? isDetails}) {
     quantityPartController.addListener(sumTotal);
     priceUnitaryController.addListener(sumTotal);
-    _init(customer: customer);
+    _init(customer: customer, isDetails: isDetails);
   }
 
+  Customer? _customer;
 
+  final RepositoryService _repository = RepositoryService();
+
+  List<VehicleType> _vehicles = [];
+
+  VehicleType? _selectedVehicle;
 
   File? _imageFile;
 
@@ -43,13 +52,18 @@ class ServiceState with ChangeNotifier {
   TextEditingController priceUnitaryController = TextEditingController();
   TextEditingController quantityPartController = TextEditingController();
 
-  List<Service> observations = [];
-  List<Service> purchasePart = [];
+  TextEditingController yearFabricationController = TextEditingController();
+  TextEditingController colorController = TextEditingController();
+  TextEditingController modelController = TextEditingController();
+  TextEditingController brandController = TextEditingController();
+  TextEditingController plateController = TextEditingController();
+
+  List<Observation> observations = [];
+  List<PurchaseItem> purchasePart = [];
 
   final formKey = GlobalKey<FormState>();
 
   bool _isDetails = false;
-
 
   double? _sumValue;
 
@@ -57,12 +71,22 @@ class ServiceState with ChangeNotifier {
 
   get isCPF => _isCPF;
 
-  double ? get sumValue => _sumValue;
+  double? get sumValue => _sumValue;
 
   get isDetails => _isDetails;
 
-
   File? get imageFile => _imageFile;
+
+  List<VehicleType> get vehicles => _vehicles;
+
+  VehicleType? get selectedVehicle => _selectedVehicle;
+
+  Customer? get customer => _customer;
+
+  set customer(Customer? value) {
+    _customer = value;
+    notifyListeners();
+  }
 
   set sumValue(double? value) {
     _sumValue = value;
@@ -74,22 +98,27 @@ class ServiceState with ChangeNotifier {
     notifyListeners();
   }
 
+  set selectVehicle(VehicleType? vehicle) {
+    _selectedVehicle = vehicle;
+    notifyListeners();
+  }
+
   set isCPF(value) {
+    documentController.clear();
     _isCPF = value;
     notifyListeners();
   }
 
   set isDetails(value) {
-    print('alterando para value = $value');
-    print('antes = $_isDetails');
     _isDetails = value;
-    print('depois = $_isDetails');
     notifyListeners();
   }
 
   Future<void> _init({Customer? customer, bool? isDetails}) async {
-    _isDetails = isDetails ?? false;
+    loadVehicles();
     if (customer != null && (isDetails ?? false)) {
+      isDetails = isDetails;
+      _customer = customer;
       fillFieldsFromCustomer(customer);
     } else {
       clearForm();
@@ -97,10 +126,11 @@ class ServiceState with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool?> saveForm() async {
+  Future<bool?> saveForm({bool? isEdit = false}) async {
+    /// TODO refatorar
     try {
-
-      final customer = Customer(
+      customer = Customer(
+        id: customer?.id,
         name: nameController.text,
         surname: surnameController.text,
         whatsapp: whatsappController.text,
@@ -126,23 +156,58 @@ class ServiceState with ChangeNotifier {
           await useCaseCustomer.getAllDocuments(),
         );
 
-      if (listDocuments.contains(customer.document)) {
-        Fluttertoast.showToast(
-          msg: "Cliente já cadastrado",
-          backgroundColor: Colors.yellow,
-          textColor: Colors.orange,
-        );
-        return null;
+      if (!listDocuments.contains(customer?.document)) {
+        await useCaseCustomer.addCustomer(customer!);
       }
 
+      var vehicle = Vehicle(
+        model: modelController.text,
+        color: colorController.text,
+        plate: plateController.text,
+        manufactureYear: int.tryParse(yearFabricationController.text) ?? 0,
+        type: selectedVehicle!,
+      );
 
 
-      await useCaseCustomer.addCustomer(customer);
+      var purchase = PurchaseItem(
+        quantity: int.tryParse(quantityPartController.text) ?? 0,
+        part: partController.text,
+        brand: brandController.text,
+        totalPrice: sumValue,
+        unitPrice: double.tryParse(priceUnitaryController.text),
+      );
+
+      var observation = Observation(
+        observation: observationServiceController.text
+      );
+
+      List<Observation> observations = [observation];
+      List<PurchaseItem> purchaseItems = [purchase];
+
+      final service = Service(
+        vehicle: vehicle,
+        customer: customer!,
+        entryDate:  DateTime.now(),
+        observations: observations,
+        purchaseItems: purchaseItems,
+        status: 0,
+        imagePath: '',
+      );
+
+      final repositoryService = RepositoryService();
+      final useCaseService = UseCaseService(repositoryService);
+
+      await useCaseService.addService(service);
 
       return true;
     } catch (e) {
       return false;
     }
+  }
+
+  Future<void> loadVehicles() async {
+    _vehicles = await _repository.listVehiclesTypes();
+    notifyListeners();
   }
 
   Future<bool> onPressedDeleteCustomer({required int id}) async {
@@ -197,35 +262,32 @@ class ServiceState with ChangeNotifier {
     neighborhoodController.clear();
   }
 
-
-  void addObservation(Service service){
+  void addObservation(Observation service) {
     observations.add(service);
     observationServiceController.clear();
     notifyListeners();
   }
 
-  void addPurchasePart(Service service){
+  void addPurchasePart(PurchaseItem service) {
     purchasePart.add(service);
-     partController.clear();
-     markController.clear();
-     priceUnitaryController.clear();
-     quantityPartController.clear();
-     sumValue = 0.0;
+    partController.clear();
+    markController.clear();
+    priceUnitaryController.clear();
+    quantityPartController.clear();
+    sumValue = 0.0;
     notifyListeners();
   }
 
-  void sumTotal(){
-    if(quantityPartController.text.isNotEmpty && priceUnitaryController.text.isNotEmpty){
+  void sumTotal() {
+    if (quantityPartController.text.isNotEmpty &&
+        priceUnitaryController.text.isNotEmpty) {
       var quantity = int.tryParse(quantityPartController.text) ?? 0;
 
-      var priceUnitary =
-      double.tryParse(priceUnitaryController.text) ?? 0.0;
+      var priceUnitary = double.tryParse(priceUnitaryController.text) ?? 0.0;
       sumValue = priceUnitary * quantity;
       notifyListeners();
     }
   }
-
-
 
   void selectPhoto(BuildContext context) {
     final picker = ImagePicker();
@@ -240,7 +302,7 @@ class ServiceState with ChangeNotifier {
             onTap: () async {
               final picked = await picker.pickImage(source: ImageSource.camera);
               if (picked != null) {
-                  imageFile = File(picked.path);
+                imageFile = File(picked.path);
               }
               Navigator.pop(context);
             },
@@ -249,9 +311,10 @@ class ServiceState with ChangeNotifier {
             leading: const Icon(Icons.photo_library),
             title: const Text('Escolher da galeria'),
             onTap: () async {
-              final picked = await picker.pickImage(source: ImageSource.gallery);
+              final picked =
+                  await picker.pickImage(source: ImageSource.gallery);
               if (picked != null) {
-                  imageFile = File(picked.path);
+                imageFile = File(picked.path);
               }
               Navigator.pop(context);
             },
@@ -260,32 +323,31 @@ class ServiceState with ChangeNotifier {
       ),
     );
   }
-
 }
 
 class RegisterCustomer extends StatelessWidget {
-  const RegisterCustomer({this.customer, this.isDetails = false});
-
-  final Customer? customer;
+  const RegisterCustomer({required this.isDetails});
 
   final bool isDetails;
 
   @override
   Widget build(BuildContext context) {
-    Provider.of<ServiceState>(context)
-        ._init(customer: customer, isDetails: isDetails);
-
     return Center(
       child: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(18.0),
           child: Consumer<ServiceState>(
             builder: (context, state, Widget? _) {
+              state.isDetails = isDetails;
               return Form(
                 key: state.formKey,
                 child: Column(
                   children: [
-                    if (!state.isDetails) _SelectedCustomer(),
+                    if (state.customer?.id == null) ...[
+                      _SelectedCustomer(),
+                    ] else ...[
+                      _SaveEdit(),
+                    ],
                     _InfoCardCustomer(),
                     _InfoCardAddress(),
                     _InfoCardObservation(),
@@ -304,7 +366,7 @@ class _InfoCardCustomer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final state = Provider.of<ServiceState>(context, listen: true);
+    final state = Provider.of<ServiceState>(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -329,7 +391,7 @@ class _InfoCardCustomer extends StatelessWidget {
                   controller: state.nameController,
                   isRequired: true,
                   validator: validator,
-                  maxLength: 15,
+                  maxLength: 25,
                   enabled: state.isDetails,
                 ),
                 _TextField(
@@ -592,7 +654,6 @@ class _TextField extends StatelessWidget {
   }
 }
 
-
 class _SelectedCustomer extends StatelessWidget {
   const _SelectedCustomer();
 
@@ -632,8 +693,47 @@ class _SelectedCustomer extends StatelessWidget {
   }
 }
 
-String? validator(String? value) {
+class _SaveEdit extends StatelessWidget {
+  const _SaveEdit();
 
+  @override
+  Widget build(BuildContext context) {
+    final state = Provider.of<ServiceState>(context);
+
+    return GestureDetector(
+      onTap: () async {
+        var result = await state.saveForm(isEdit: true);
+
+        if (result == true) {
+          Navigator.pop(context);
+
+          Fluttertoast.showToast(
+            msg: "Atualizado com sucesso",
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+          );
+        }
+      },
+      child: SizedBox(
+        height: 50,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.blue.shade700,
+            borderRadius: BorderRadius.circular(
+              12,
+            ),
+            border: Border.all(color: Colors.blue.shade700, width: 1),
+          ),
+          child: Center(
+            child: Text('Salvar'),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String? validator(String? value) {
   if (value!.isEmpty) {
     return 'Precisa preencher o campo';
   }

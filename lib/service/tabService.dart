@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:provider/provider.dart';
 import 'package:workshop_front_end/service/service_form.dart';
 
 import '../customer/view.dart';
@@ -13,7 +11,7 @@ class ServiceTab extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor:  Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           title: const Text("Registrar serviço"),
           backgroundColor: Colors.blue.shade700,
@@ -27,17 +25,15 @@ class ServiceTab extends StatelessWidget {
             ],
           ),
         ),
-        body: ChangeNotifierProvider(
-          create: (context) => ServiceState(),
-          child: const TabBarView(
-            children: [
-              RegisterCustomer(),
-              RegisterService(),
-            ],
-          ),
+        body: const TabBarView(
+          children: [
+            RegisterCustomer(
+              isDetails: false,
+            ),
+            RegisterService(),
+          ],
         ),
       ),
     );
   }
 }
-

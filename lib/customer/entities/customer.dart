@@ -62,6 +62,7 @@ class Customer {
     );
   }
 
+
   @override
   String toString() {
     return 'Customer{id: $id, name: $name, surname: $surname, whatsapp: $whatsapp, email: $email, document: $document, observation: $observation, address: $address}';

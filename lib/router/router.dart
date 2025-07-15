@@ -10,11 +10,11 @@ class RouterApp {
   final GoRouter router = GoRouter(
     routes: [
       GoRoute(
-        path: '/',
+        path: '/s',
         builder: (context, state) => Login(),
       ),
       GoRoute(
-        path: '/home',
+        path: '/',
         builder: (context, state) => Home(),
       ),
       GoRoute(

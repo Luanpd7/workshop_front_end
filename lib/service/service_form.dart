@@ -3,11 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:workshop_front_end/util/mask.dart';
 import '../customer/view.dart';
 import 'entities/service'
     '.dart';
-import 'package:intl/intl.dart';
+import 'entities/vehicle.dart';
 
 class RegisterService extends StatelessWidget {
   const RegisterService({this.service, this.isDetails = false});
@@ -15,6 +14,7 @@ class RegisterService extends StatelessWidget {
   final Service? service;
 
   final bool isDetails;
+
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class RegisterService extends StatelessWidget {
           child: Consumer<ServiceState>(
             builder: (context, state, Widget? _) {
               return Form(
-                key: state.formKey,
+
                 child: Column(
                   children: [
                     _ButtonSave(),
@@ -85,33 +85,37 @@ class _InfoCardService extends StatelessWidget {
                         borderRadius: BorderRadius.circular(15),
                       ),
                     ),
-                    items: [],
-                    onChanged: (value) {},
+                    items: state.vehicles.map((vehicle) {
+                      return DropdownMenuItem<VehicleType>(
+                        value: vehicle,
+                        child: Text(vehicle.name),
+                      );
+                    },).toList(),
+                    onChanged: (selected) {
+                      state.selectVehicle = selected;
+                    },
                   ),
                 ),
                 _TextField(
                   header: 'Modelo',
                   isRequired: true,
-                  controller: state.surnameController,
+                  controller: state.brandController,
                   maxLength: 25,
                 ),
                 _TextField(
                   header: 'Ano de fabricação',
-                  controller: state.documentController,
-                  isRequired: true,
+                  controller: state.yearFabricationController,
                   validator: validator,
                 ),
                 _TextField(
                   header: 'Cor',
-                  controller: state.whatsappController,
-                  isRequired: true,
+                  controller: state.colorController,
                   validator: validator,
-                  mask: phoneMask,
                 ),
                 _TextField(
                   header: 'Placa',
-                  controller: state.emailController,
-                  maxLength: 25,
+                  controller: state.plateController,
+                  maxLength: 10,
                 ),
               ],
             ),
@@ -176,10 +180,10 @@ class _InfoPurchase extends StatelessWidget {
                         var item = state.purchasePart[index];
 
                         return _ItemPurchase(
-                          mark: item.mark ?? '',
+                          mark: item.brand ?? '',
                           part: item.part ?? '',
                           quantity: item.quantity.toString(),
-                          priceTotal: item.priceTotal?.toStringAsFixed(2) ?? '0.00',
+                          priceTotal: item.unitPrice?.toStringAsFixed(2) ?? '0.00',
                         );
                       },
                     ),
@@ -408,10 +412,10 @@ class _ButtonSave extends StatelessWidget {
 
     return GestureDetector(
       onTap: () async {
-        if (state.formKey.currentState!.validate()) {
+        if (state.formKey.currentState?.validate() ?? true) {
           final result = await state.saveForm();
           if (result == true) {
-            state.clearForm();
+            //state.clearForm();
             Fluttertoast.showToast(
               msg: "Cadastrado com sucesso!",
               backgroundColor: Colors.green,
@@ -540,11 +544,11 @@ void showVehicleModal(BuildContext context) {
                 var priceUnitary =
                     double.tryParse(state.priceUnitaryController.text);
                 var priceTotal = priceUnitary! * quantity!;
-                var purchasePart = Service(
+                var purchasePart = PurchaseItem(
                   part: state.partController.text,
                   quantity: quantity,
-                  priceTotal: priceTotal,
-                  mark: state.markController.text,
+                  totalPrice: priceTotal,
+                  brand: state.markController.text,
                 );
 
                 state.addPurchasePart(purchasePart);
@@ -606,7 +610,7 @@ void showObservationModal(BuildContext context) {
               ),
             ),
             onPressed: () {
-              var observations = Service(
+              var observations = Observation(
                 observation: state.observationServiceController.text,
                 date: DateTime.now(),
               );

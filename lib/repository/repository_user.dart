@@ -25,7 +25,7 @@ class RepositoryUser implements IRepositoryUser{
 
     try{
       final response = await http.post(
-        Uri.parse('$baseURL/add_usuario'),
+        Uri.parse('$baseURL/user/add_usuario'),
         headers: {'Content-Type': 'application/json'},
         body: userBody,
       );
@@ -46,11 +46,10 @@ class RepositoryUser implements IRepositoryUser{
       {  required User user}) async {
     var userBody = jsonEncode(user.toJson());
 
-    print('------------------- ${baseURL}');
-    print('------------------- ${userBody}');
+
     try {
       final response = await http.post(
-        Uri.parse('$baseURL/login'),
+        Uri.parse('$baseURL/user/login'),
         headers: {'Content-Type': 'application/json'},
         body: userBody,
       );

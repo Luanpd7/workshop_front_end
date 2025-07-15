@@ -12,6 +12,8 @@ final Logger _logger = Logger('RepositoryCustomer');
 abstract class IRepositoryCustomer {
   Future<void> addCustomer(Customer customer);
 
+  Future<void> updateCustomer(Customer customer);
+
   Future<List<Customer>> listCustomers();
 
   Future<bool> deleteCustomer(int id);
@@ -32,7 +34,29 @@ class RepositoryCustomer implements IRepositoryCustomer {
       });
 
       final response = await http.post(
-        Uri.parse('$baseURL/add_customer'),
+        Uri.parse('$baseURL/user/add_customer'),
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception();
+      }
+    } catch (e) {
+      _logger.severe('Erro ao adicionar cliente: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> updateCustomer(Customer customer) async {
+    try {
+      final body = jsonEncode({
+        "Customer": customer.toJson(),
+      });
+
+      final response = await http.post(
+        Uri.parse('$baseURL/user/update_customer'),
         headers: {'Content-Type': 'application/json'},
         body: body,
       );
@@ -50,7 +74,7 @@ class RepositoryCustomer implements IRepositoryCustomer {
   Future<List<Customer>> listCustomers() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseURL/listCustomers'),
+        Uri.parse('$baseURL/user/listCustomers'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode != 200) {
@@ -77,7 +101,7 @@ class RepositoryCustomer implements IRepositoryCustomer {
       var body = jsonEncode({"id": id});
 
       final response = await http.delete(
-        Uri.parse('$baseURL/delete_customer'),
+        Uri.parse('$baseURL/user/delete_customer'),
         headers: {'Content-Type': 'application/json'},
         body: body,
       );
@@ -120,7 +144,7 @@ class RepositoryCustomer implements IRepositoryCustomer {
   Future<List<String>> getAllDocuments() async {
     try {
       final response = await http.get(
-        Uri.parse('$baseURL/listCustomers'),
+        Uri.parse('$baseURL/user/listCustomers'),
         headers: {'Content-Type': 'application/json'},
       );
       if (response.statusCode != 200) {

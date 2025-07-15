@@ -12,6 +12,10 @@ class UseCaseCustomer {
   Future<void> addCustomer(Customer customer) =>
       repository.addCustomer(customer);
 
+  Future<void> updateCustomer(Customer customer) =>
+      repository.updateCustomer(customer);
+
+
   Future<List<Customer>> listCustomers() => repository.listCustomers();
 
   Future<bool> deleteCustomer(int id) => repository.deleteCustomer(id);

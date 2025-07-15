@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:fluttertoast/fluttertoast.dart';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:workshop_front_end/customer/entities/customer.dart';
@@ -25,7 +24,6 @@ class ListCustomersState with ChangeNotifier {
   Future<void> _init() async {
     try {
       await loadData();
-
     } catch (e) {
       Logger.detached('Error in customer');
     }
@@ -43,7 +41,6 @@ class ListCustomersState with ChangeNotifier {
     _loading = false;
     notifyListeners();
   }
-
 }
 
 class ListCustomer extends StatelessWidget {
@@ -63,7 +60,7 @@ class ListCustomer extends StatelessWidget {
         ),
         body: Padding(
           padding: const EdgeInsets.only(top: 10),
-          child: ListViewItems(selectedCustomer : selectedCustomer),
+          child: ListViewItems(selectedCustomer: selectedCustomer),
         ),
       ),
     );
@@ -74,11 +71,12 @@ class ListViewItems extends StatelessWidget {
   const ListViewItems({required this.selectedCustomer});
 
   final bool selectedCustomer;
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ListCustomersState>(
       builder: (context, state, _) {
-        if(state.loading){
+        if (state.loading) {
           return Center(
             child: CircularProgressIndicator(),
           );
@@ -88,7 +86,7 @@ class ListViewItems extends StatelessWidget {
           itemBuilder: (context, index) {
             return ItemList(
               customer: state.listCustomer[index],
-                selectedCustomer : selectedCustomer,
+              selectedCustomer: selectedCustomer,
             );
           },
         );
@@ -98,7 +96,11 @@ class ListViewItems extends StatelessWidget {
 }
 
 class ItemList extends StatelessWidget {
-  const ItemList({super.key, required this.customer, required this.selectedCustomer,});
+  const ItemList({
+    super.key,
+    required this.customer,
+    required this.selectedCustomer,
+  });
 
   final Customer customer;
   final bool selectedCustomer;
@@ -109,8 +111,7 @@ class ItemList extends StatelessWidget {
     var theme = Theme.of(context).textTheme;
     return GestureDetector(
       onTap: () async {
-
-        if(selectedCustomer){
+        if (selectedCustomer) {
           Navigator.pop(context, customer);
           return;
         }
@@ -118,13 +119,13 @@ class ItemList extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (_) => ChangeNotifierProvider(
-              create: (_) => ServiceState(customer: customer),
+              create: (_) => ServiceState(customer: customer, isDetails: true),
               child: DetailsCustomer(customer: customer),
             ),
           ),
         );
 
-          await state.loadData();
+        await state.loadData();
       },
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -187,9 +188,8 @@ class DetailsCustomer extends StatelessWidget {
             padding: const EdgeInsets.only(right: 12.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-
               children: [
-                if(true)...[
+                if (state.isDetails) ...[
                   _ButtonEdit(customer: customer),
                   _ButtonDelete(
                     id: customer.id!,
@@ -200,7 +200,7 @@ class DetailsCustomer extends StatelessWidget {
           ),
         ],
       ),
-      body: RegisterCustomer(customer: customer, isDetails: true,),
+      body: RegisterCustomer(isDetails: true,),
     );
   }
 }
@@ -215,8 +215,9 @@ class _ButtonEdit extends StatelessWidget {
     final state = Provider.of<ServiceState>(context);
     return GestureDetector(
       onTap: () {
-     state.isDetails = false;
-     print('clicando ${state.isDetails}');
+        print('antes ${state.isDetails}');
+        state.isDetails = false;
+        print('after ${state.isDetails}');
       },
       child: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -259,7 +260,7 @@ class _ButtonDelete extends StatelessWidget {
                       backgroundColor: Colors.green,
                       textColor: Colors.white,
                     );
-                    if(context.mounted) {
+                    if (context.mounted) {
                       Navigator.pop(context);
                       Navigator.pop(context, 'update');
                     }
