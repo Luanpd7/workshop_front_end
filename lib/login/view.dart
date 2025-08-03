@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:workshop_front_end/domain/use_case_user.dart';
 
+import '../id_context.dart';
 import '../repository/repository_user.dart';
 import '../util/modal.dart';
 import 'entities/login.dart';
@@ -55,6 +56,8 @@ class LoginState with ChangeNotifier {
       return await useCaseUser.addNewUser(user: user);
     } else {
       userResult = await useCaseUser.getLoginUser(user: user);
+
+      UserContext().id = userResult?.id;
 
       if (userResult != null) {
         state.user = userResult;
@@ -162,6 +165,19 @@ class Login extends StatelessWidget {
                             ),
                             Expanded(
                               child: _ConfirmButton(onPressed: () async {
+
+                                if(state.isSignUp && state.passwordController.text != state.passwordRepeatController.text){
+                                  showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialogUtil(
+                                          title: 'Erro',
+                                          content: 'As senhas não coincidem!',
+                                        );
+                                      });
+                                  return;
+                                }
+
                                 final user = User(
                                   name: state.nameController.text,
                                   email: state.emailController.text,

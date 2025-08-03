@@ -1,3 +1,3 @@
 class ApiConfig {
-  final String baseUrl = 'http://192.168.1.4:8080';
+  final String baseUrl = 'http://192.168.1.2:8080';
 }

@@ -5,13 +5,10 @@ import 'package:workshop_front_end/repository/api_config.dart';
 import 'package:workshop_front_end/router/router.dart';
 import 'package:http/http.dart' as http;
 import 'package:workshop_front_end/setting/view.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:intl/intl.dart';
 import 'customer/view.dart';
 import 'login/view.dart';
 
 final Logger _logger = Logger('RepositoryCustomer');
-
 final ThemeData lightTheme = ThemeData(
   brightness: Brightness.light,
   primaryColor: Colors.indigo,
@@ -61,6 +58,8 @@ void main() async {
   );
 }
 
+final _router = RouterApp().router;
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -69,18 +68,13 @@ class MyApp extends StatelessWidget {
     final themeProvider = Provider.of<SettingsState>(context);
 
     return MaterialApp.router(
-      // localizationsDelegates: const [
-      //   AppLocalizations.delegate,
-      //   GlobalMaterialLocalizations.delegate,
-      //   GlobalWidgetsLocalizations.delegate,
-      //   GlobalCupertinoLocalizations.delegate,
-      // ],
-     // supportedLocales: AppLocalizations.supportedLocales,
+
+      routerConfig: _router,
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
       darkTheme: darkTheme,
       themeMode: themeProvider.themeMode,
-      routerConfig: RouterApp().router,
+
     );
   }
 }

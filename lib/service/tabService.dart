@@ -3,6 +3,7 @@ import 'package:workshop_front_end/service/service_form.dart';
 
 import '../customer/view.dart';
 
+/// Tela das tabs de cliente e serviço
 class ServiceTab extends StatelessWidget {
   const ServiceTab({super.key});
 

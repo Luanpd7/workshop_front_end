@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -7,7 +8,8 @@ import 'package:workshop_front_end/domain/use_case_customer.dart';
 import 'package:workshop_front_end/repository/repository_customer.dart';
 import 'package:workshop_front_end/util/mask.dart';
 import '../domain/use_case_service.dart';
-import '../repository/repository_vehicle.dart';
+import '../login/view.dart';
+import '../repository/repository_service.dart';
 import '../service/entities/service.dart';
 import '../service/entities/vehicle.dart';
 import '../util/modal.dart';
@@ -17,13 +19,19 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
 class ServiceState with ChangeNotifier {
-  ServiceState({Customer? customer, bool? isDetails}) {
+  ServiceState(
+      {Customer? customer, bool? isDetails, ServiceDetails? serviceDetails}) {
     quantityPartController.addListener(sumTotal);
     priceUnitaryController.addListener(sumTotal);
-    _init(customer: customer, isDetails: isDetails);
+    _init(
+        customer: customer,
+        details: isDetails,
+        serviceDetails: serviceDetails);
   }
 
   Customer? _customer;
+
+  bool _loading = false;
 
   final RepositoryService _repository = RepositoryService();
 
@@ -32,6 +40,20 @@ class ServiceState with ChangeNotifier {
   VehicleType? _selectedVehicle;
 
   File? _imageFile;
+
+  int? idCustomer;
+
+  List<Observation> observations = [];
+
+  List<PurchaseItem> purchasePart = [];
+
+  final formKey = GlobalKey<FormState>();
+
+  bool _isDetails = false;
+
+  double? _sumValue;
+
+  bool _isCPF = false;
 
   TextEditingController nameController = TextEditingController();
   TextEditingController surnameController = TextEditingController();
@@ -58,18 +80,9 @@ class ServiceState with ChangeNotifier {
   TextEditingController brandController = TextEditingController();
   TextEditingController plateController = TextEditingController();
 
-  List<Observation> observations = [];
-  List<PurchaseItem> purchasePart = [];
-
-  final formKey = GlobalKey<FormState>();
-
-  bool _isDetails = false;
-
-  double? _sumValue;
-
-  bool _isCPF = false;
-
   get isCPF => _isCPF;
+
+  get loading => _loading;
 
   double? get sumValue => _sumValue;
 
@@ -82,6 +95,11 @@ class ServiceState with ChangeNotifier {
   VehicleType? get selectedVehicle => _selectedVehicle;
 
   Customer? get customer => _customer;
+
+  set loading(value) {
+    _loading = value;
+    notifyListeners();
+  }
 
   set customer(Customer? value) {
     _customer = value;
@@ -114,10 +132,17 @@ class ServiceState with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _init({Customer? customer, bool? isDetails}) async {
+  Future<void> _init(
+      {Customer? customer,
+      bool? details,
+      ServiceDetails? serviceDetails}) async {
     loadVehicles();
-    if (customer != null && (isDetails ?? false)) {
-      isDetails = isDetails;
+    if (serviceDetails != null) {
+      isDetails = details;
+      fillFieldsFromServiceDetails(serviceDetails);
+    }
+
+    if (customer != null && (details ?? false)) {
       _customer = customer;
       fillFieldsFromCustomer(customer);
     } else {
@@ -126,29 +151,54 @@ class ServiceState with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool?> saveForm({bool? isEdit = false}) async {
-    /// TODO refatorar
+  /// resgatar as informações do cliente nos formulários
+  Customer? getFormCustomer(BuildContext context){
+    var user = Provider.of<LoginState>(context, listen: false).user;
+
+    customer = Customer(
+      idUser: user.id!,
+      id: idCustomer,
+      name: nameController.text,
+      surname: surnameController.text,
+      whatsapp: whatsappController.text,
+      email: emailController.text,
+      document: documentController.text,
+      observation: observationController.text,
+      address: Address(
+        cep: cepController.text,
+        city: cityController.text,
+        neighborhood: neighborhoodController.text,
+        road: roadController.text,
+        number: numberController.text,
+      ),
+    );
+    return customer;
+  }
+
+  /// resgatar as informações do veiculo nos formulários
+  Vehicle getFormVehicle(){
+    final vehicle = Vehicle(
+      model: brandController.text,
+      color: colorController.text,
+      plate: plateController.text,
+      manufactureYear: int.parse(yearFabricationController.text),
+      type: _selectedVehicle?.id ?? 0,
+    );
+
+    return vehicle;
+  }
+
+  Future<bool?> saveForm(BuildContext context, {bool? isEdit = false}) async {
+    var user = Provider.of<LoginState>(context, listen: false).user;
     try {
-      customer = Customer(
-        id: customer?.id,
-        name: nameController.text,
-        surname: surnameController.text,
-        whatsapp: whatsappController.text,
-        email: emailController.text,
-        document: documentController.text,
-        observation: observationController.text,
-        address: Address(
-          cep: cepController.text,
-          city: cityController.text,
-          neighborhood: neighborhoodController.text,
-          road: roadController.text,
-          number: numberController.text,
-        ),
-      );
+      customer = getFormCustomer(context);
 
       var listDocuments = [];
       final repository = RepositoryCustomer();
       final useCaseCustomer = UseCaseCustomer(repository);
+
+      final repositoryService = RepositoryService();
+      final useCaseService = UseCaseService(repositoryService);
 
       listDocuments
         ..clear()
@@ -156,50 +206,33 @@ class ServiceState with ChangeNotifier {
           await useCaseCustomer.getAllDocuments(),
         );
 
-      if (!listDocuments.contains(customer?.document)) {
-        await useCaseCustomer.addCustomer(customer!);
+      Uint8List imageBytes = await imageFile?.readAsBytes() ?? Uint8List(0);
+
+      final base64Image = base64Encode(imageBytes);
+
+      final vehicle = getFormVehicle();
+
+      int idCustomerNew;
+
+      if (customer?.id == null) {
+        idCustomerNew = await useCaseCustomer.addCustomer(customer!);
+      } else {
+        idCustomerNew = customer!.id!;
       }
 
-      var vehicle = Vehicle(
-        model: modelController.text,
-        color: colorController.text,
-        plate: plateController.text,
-        manufactureYear: int.tryParse(yearFabricationController.text) ?? 0,
-        type: selectedVehicle!,
-      );
-
-
-      var purchase = PurchaseItem(
-        quantity: int.tryParse(quantityPartController.text) ?? 0,
-        part: partController.text,
-        brand: brandController.text,
-        totalPrice: sumValue,
-        unitPrice: double.tryParse(priceUnitaryController.text),
-      );
-
-      var observation = Observation(
-        observation: observationServiceController.text
-      );
-
-      List<Observation> observations = [observation];
-      List<PurchaseItem> purchaseItems = [purchase];
-
-      final service = Service(
+      final success = await useCaseService.initializeService(
+        idUser: user.id!,
+        customer:
+            customer?.id == null ? Customer(id: idCustomerNew) : customer!,
         vehicle: vehicle,
-        customer: customer!,
-        entryDate:  DateTime.now(),
         observations: observations,
-        purchaseItems: purchaseItems,
+        items: purchasePart,
         status: 0,
-        imagePath: '',
+        entryDate: DateTime.now(),
+        imageBytes: base64Image,
       );
 
-      final repositoryService = RepositoryService();
-      final useCaseService = UseCaseService(repositoryService);
-
-      await useCaseService.addService(service);
-
-      return true;
+      return success;
     } catch (e) {
       return false;
     }
@@ -234,7 +267,9 @@ class ServiceState with ChangeNotifier {
     }
   }
 
+  /// responsável por preencher os campos do cliente quando for detqlhes
   void fillFieldsFromCustomer(Customer customer) {
+    idCustomer = customer.id;
     nameController.text = customer.name ?? '';
     surnameController.text = customer.surname ?? '';
     emailController.text = customer.email ?? '';
@@ -248,6 +283,19 @@ class ServiceState with ChangeNotifier {
     neighborhoodController.text = customer.address?.neighborhood ?? '';
   }
 
+  /// responsável por preencher os campos do veiculo quando for detqlhes
+  void fillFieldsFromServiceDetails(ServiceDetails service) {
+    brandController.text = service.vehicleModel;
+    colorController.text = service.vehicleColor;
+    plateController.text = service.vehiclePlate;
+    yearFabricationController.text = service.manufactureYear.toString();
+    selectVehicle =
+        VehicleType(id: service.vehicleTypeId, name: service.vehicleType);
+    observations.addAll(service.observations);
+    purchasePart.addAll(service.purchaseItems);
+  }
+
+  /// Função para limpar campos
   void clearForm() {
     nameController.clear();
     surnameController.clear();
@@ -262,12 +310,14 @@ class ServiceState with ChangeNotifier {
     neighborhoodController.clear();
   }
 
+  /// adicionar uma observação na listagem
   void addObservation(Observation service) {
     observations.add(service);
     observationServiceController.clear();
     notifyListeners();
   }
 
+  /// adicionar uma itens de compra na listagem
   void addPurchasePart(PurchaseItem service) {
     purchasePart.add(service);
     partController.clear();
@@ -278,6 +328,7 @@ class ServiceState with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Somar o total, tendo a unidade e a quantidade
   void sumTotal() {
     if (quantityPartController.text.isNotEmpty &&
         priceUnitaryController.text.isNotEmpty) {
@@ -289,6 +340,7 @@ class ServiceState with ChangeNotifier {
     }
   }
 
+  /// Selecionar uma foto da galeria ou abri a camera
   void selectPhoto(BuildContext context) {
     final picker = ImagePicker();
 
@@ -304,7 +356,9 @@ class ServiceState with ChangeNotifier {
               if (picked != null) {
                 imageFile = File(picked.path);
               }
-              Navigator.pop(context);
+              if(context.mounted){
+                Navigator.pop(context);
+              }
             },
           ),
           ListTile(
@@ -316,7 +370,9 @@ class ServiceState with ChangeNotifier {
               if (picked != null) {
                 imageFile = File(picked.path);
               }
-              Navigator.pop(context);
+              if(context.mounted){
+                Navigator.pop(context);
+              }
             },
           ),
         ],
@@ -326,7 +382,7 @@ class ServiceState with ChangeNotifier {
 }
 
 class RegisterCustomer extends StatelessWidget {
-  const RegisterCustomer({required this.isDetails});
+  const RegisterCustomer({super.key, required this.isDetails});
 
   final bool isDetails;
 
@@ -362,6 +418,7 @@ class RegisterCustomer extends StatelessWidget {
   }
 }
 
+/// card para o cliente no formulário
 class _InfoCardCustomer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -401,6 +458,7 @@ class _InfoCardCustomer extends StatelessWidget {
                   enabled: state.isDetails,
                 ),
                 _TextField(
+                  textInputType: TextInputType.number,
                   header: 'Documento',
                   controller: state.documentController,
                   isRequired: true,
@@ -410,6 +468,7 @@ class _InfoCardCustomer extends StatelessWidget {
                   enabled: state.isDetails,
                 ),
                 _TextField(
+                  textInputType: TextInputType.number,
                   header: 'Whatsapp',
                   controller: state.whatsappController,
                   isRequired: true,
@@ -432,6 +491,7 @@ class _InfoCardCustomer extends StatelessWidget {
   }
 }
 
+/// card para endereços no formulário
 class _InfoCardAddress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -502,6 +562,7 @@ class _InfoCardAddress extends StatelessWidget {
   }
 }
 
+/// card para observações no formulário
 class _InfoCardObservation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -536,6 +597,7 @@ class _InfoCardObservation extends StatelessWidget {
   }
 }
 
+/// Util para os campos de textos
 class _TextField extends StatelessWidget {
   const _TextField({
     required this.header,
@@ -547,6 +609,7 @@ class _TextField extends StatelessWidget {
     this.isFieldDocument = false,
     this.isFieldCEP = false,
     this.enabled = true,
+    this.textInputType,
   });
 
   final String header;
@@ -558,6 +621,7 @@ class _TextField extends StatelessWidget {
   final bool isFieldDocument;
   final bool isFieldCEP;
   final bool enabled;
+  final TextInputType? textInputType;
 
   @override
   Widget build(BuildContext context) {
@@ -569,6 +633,7 @@ class _TextField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextFormField(
+            keyboardType: textInputType ?? TextInputType.text,
             enabled: !state.isDetails,
             onChanged: (value) {
               if (isFieldCEP && value.length == 10) {
@@ -654,6 +719,7 @@ class _TextField extends StatelessWidget {
   }
 }
 
+/// Opção de selecionar um cliente já cadastrado
 class _SelectedCustomer extends StatelessWidget {
   const _SelectedCustomer();
 
@@ -693,6 +759,7 @@ class _SelectedCustomer extends StatelessWidget {
   }
 }
 
+/// Botão para salvar edição
 class _SaveEdit extends StatelessWidget {
   const _SaveEdit();
 
@@ -702,10 +769,12 @@ class _SaveEdit extends StatelessWidget {
 
     return GestureDetector(
       onTap: () async {
-        var result = await state.saveForm(isEdit: true);
+        var result = await state.saveForm(context, isEdit: true);
 
         if (result == true) {
-          Navigator.pop(context);
+          if(context.mounted){
+            Navigator.pop(context);
+          }
 
           Fluttertoast.showToast(
             msg: "Atualizado com sucesso",
@@ -733,6 +802,7 @@ class _SaveEdit extends StatelessWidget {
   }
 }
 
+/// Validação do formulário
 String? validator(String? value) {
   if (value!.isEmpty) {
     return 'Precisa preencher o campo';

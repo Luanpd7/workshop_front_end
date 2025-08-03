@@ -1,28 +1,33 @@
 import 'dart:async';
 import 'package:fluttertoast/fluttertoast.dart';
-
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:workshop_front_end/customer/entities/customer.dart';
 import 'package:workshop_front_end/customer/view.dart';
-
 import '../domain/use_case_customer.dart';
+import '../login/entities/login.dart';
+import '../login/view.dart';
 import '../repository/repository_customer.dart';
 import '../util/modal.dart';
 
 class ListCustomersState with ChangeNotifier {
-  ListCustomersState() {
-    _init();
+  ListCustomersState({required User user}) {
+    _init(user: user);
   }
+
+   User? _user;
 
   final listCustomer = <Customer>[];
   bool _loading = true;
 
   get loading => _loading;
 
-  Future<void> _init() async {
+  Future<void> _init({User? user}) async {
     try {
+      if(user != null){
+        _user = user;
+      }
       await loadData();
     } catch (e) {
       Logger.detached('Error in customer');
@@ -33,7 +38,7 @@ class ListCustomersState with ChangeNotifier {
     final repository = RepositoryCustomer();
     final useCaseCustomer = UseCaseCustomer(repository);
 
-    var result = await useCaseCustomer.listCustomers();
+    var result = await useCaseCustomer.listCustomers(idUser: _user?.id);
 
     listCustomer
       ..clear()
@@ -44,14 +49,16 @@ class ListCustomersState with ChangeNotifier {
 }
 
 class ListCustomer extends StatelessWidget {
-  const ListCustomer({this.selectedCustomer = false});
+  /// Default constructor
+  const ListCustomer({super.key, this.selectedCustomer = false});
 
   final bool selectedCustomer;
 
   @override
   Widget build(BuildContext context) {
+    var user = Provider.of<LoginState>(context, listen: false).user;
     return ChangeNotifierProvider<ListCustomersState>(
-      create: (_) => ListCustomersState(),
+      create: (_) => ListCustomersState(user: user),
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
@@ -60,15 +67,15 @@ class ListCustomer extends StatelessWidget {
         ),
         body: Padding(
           padding: const EdgeInsets.only(top: 10),
-          child: ListViewItems(selectedCustomer: selectedCustomer),
+          child: _ListViewItems(selectedCustomer: selectedCustomer),
         ),
       ),
     );
   }
 }
 
-class ListViewItems extends StatelessWidget {
-  const ListViewItems({required this.selectedCustomer});
+class _ListViewItems extends StatelessWidget {
+  const _ListViewItems({ required this.selectedCustomer});
 
   final bool selectedCustomer;
 
@@ -81,10 +88,17 @@ class ListViewItems extends StatelessWidget {
             child: CircularProgressIndicator(),
           );
         }
+
+        if (state.listCustomer.isEmpty) {
+          return Center(
+            child: Text('Lista vazia'),
+          );
+        }
+
         return ListView.builder(
           itemCount: state.listCustomer.length,
           itemBuilder: (context, index) {
-            return ItemList(
+            return _ItemList(
               customer: state.listCustomer[index],
               selectedCustomer: selectedCustomer,
             );
@@ -95,9 +109,8 @@ class ListViewItems extends StatelessWidget {
   }
 }
 
-class ItemList extends StatelessWidget {
-  const ItemList({
-    super.key,
+class _ItemList extends StatelessWidget {
+  const _ItemList({
     required this.customer,
     required this.selectedCustomer,
   });
@@ -120,7 +133,7 @@ class ItemList extends StatelessWidget {
           MaterialPageRoute(
             builder: (_) => ChangeNotifierProvider(
               create: (_) => ServiceState(customer: customer, isDetails: true),
-              child: DetailsCustomer(customer: customer),
+              child: _DetailsCustomer(customer: customer),
             ),
           ),
         );
@@ -170,8 +183,8 @@ class ItemList extends StatelessWidget {
   }
 }
 
-class DetailsCustomer extends StatelessWidget {
-  const DetailsCustomer({required this.customer});
+class _DetailsCustomer extends StatelessWidget {
+  const _DetailsCustomer({ required this.customer});
 
   final Customer customer;
 
@@ -215,9 +228,7 @@ class _ButtonEdit extends StatelessWidget {
     final state = Provider.of<ServiceState>(context);
     return GestureDetector(
       onTap: () {
-        print('antes ${state.isDetails}');
         state.isDetails = false;
-        print('after ${state.isDetails}');
       },
       child: Padding(
         padding: const EdgeInsets.all(8.0),

@@ -1,20 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../customer/view.dart';
+import '../repository/repository_service.dart';
 import 'entities/service'
     '.dart';
 import 'entities/vehicle.dart';
 
-class RegisterService extends StatelessWidget {
-  const RegisterService({this.service, this.isDetails = false});
+/// Tela responsável pelo formulario de serviço,
+/// usado na tela segunda tab quando vou cadastrar
+/// um serviço e na quando vou editar um serviço
 
-  final Service? service;
+class RegisterService extends StatelessWidget {
+  const RegisterService({super.key, this.service, this.isDetails = false});
+
+  final ServiceDetails? service;
 
   final bool isDetails;
-
 
   @override
   Widget build(BuildContext context) {
@@ -24,17 +30,29 @@ class RegisterService extends StatelessWidget {
           padding: const EdgeInsets.all(18.0),
           child: Consumer<ServiceState>(
             builder: (context, state, Widget? _) {
+              if (state.loading) {
+                return Center(child: CircularProgressIndicator());
+              }
               return Form(
-
                 child: Column(
                   children: [
-                    _ButtonSave(),
+                    if (state.isDetails) ...[
+                      FinalizeButton(
+                        serviceId: service?.serviceId ?? 0,
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      _ButtonEdit(),
+                    ] else
+                      _ButtonSave(),
                     _InfoCardService(),
                     _InfoPurchase(),
                     _InfoCardObservation(),
-                    _InfoPhoto(
-                      onUploadPressed: () => state.selectPhoto(context),
-                    )
+                    if (!state.isDetails)
+                      _InfoPhoto(
+                        onUploadPressed: () => state.selectPhoto(context),
+                      ),
                   ],
                 ),
               );
@@ -46,7 +64,10 @@ class RegisterService extends StatelessWidget {
   }
 }
 
+/// card para a informações do serviço
 class _InfoCardService extends StatelessWidget {
+  const _InfoCardService();
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -70,52 +91,71 @@ class _InfoCardService extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: DropdownButtonFormField(
-                    decoration: InputDecoration(
-                      label: Text(
-                        'Veículo',
-                        style: theme.textTheme.labelSmall!
-                            .copyWith(color: theme.disabledColor),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: Colors.blue.shade700, width: 1),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    items: state.vehicles.map((vehicle) {
-                      return DropdownMenuItem<VehicleType>(
-                        value: vehicle,
-                        child: Text(vehicle.name),
-                      );
-                    },).toList(),
-                    onChanged: (selected) {
-                      state.selectVehicle = selected;
-                    },
+                if (state.isDetails) ...[
+                  _TextField(
+                    header: 'Veículo',
+                    isRequired: true,
+                    controller: TextEditingController(
+                        text: state.selectedVehicle?.name ?? ''),
+                    maxLength: 25,
+                    enabled: false,
                   ),
-                ),
+                ] else
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: DropdownButtonFormField(
+                      decoration: InputDecoration(
+                        label: Text(
+                          'Veículo',
+                          style: theme.textTheme.labelSmall!
+                              .copyWith(color: theme.disabledColor),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.blue.shade700, width: 1),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      items: state.isDetails == true
+                          ? []
+                          : state.vehicles.map(
+                              (vehicle) {
+                                return DropdownMenuItem<VehicleType>(
+                                  value: vehicle,
+                                  child: Text(vehicle.name),
+                                );
+                              },
+                            ).toList(),
+                      onChanged: (selected) {
+                        state.selectVehicle = selected as VehicleType;
+                      },
+                    ),
+                  ),
                 _TextField(
                   header: 'Modelo',
                   isRequired: true,
                   controller: state.brandController,
                   maxLength: 25,
+                  enabled: !state.isDetails,
                 ),
                 _TextField(
+                  textInputType: TextInputType.number,
                   header: 'Ano de fabricação',
                   controller: state.yearFabricationController,
                   validator: validator,
+                  enabled: !state.isDetails,
                 ),
                 _TextField(
                   header: 'Cor',
                   controller: state.colorController,
                   validator: validator,
+                  enabled: !state.isDetails,
                 ),
                 _TextField(
                   header: 'Placa',
                   controller: state.plateController,
                   maxLength: 10,
+                  enabled: !state.isDetails,
                 ),
               ],
             ),
@@ -126,10 +166,12 @@ class _InfoCardService extends StatelessWidget {
   }
 }
 
+/// card para a compra de itens
 class _InfoPurchase extends StatelessWidget {
+  const _InfoPurchase();
+
   @override
   Widget build(BuildContext context) {
-
     final state = Provider.of<ServiceState>(context, listen: true);
     final theme = Theme.of(context);
     return Column(
@@ -146,14 +188,15 @@ class _InfoPurchase extends StatelessWidget {
                 'Compra de peças',
                 style: theme.textTheme.titleLarge,
               ),
-              GestureDetector(
-                onTap: () => showVehicleModal(context),
-                child: Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: 28,
+              if (state.isDetails != true)
+                GestureDetector(
+                  onTap: () => showVehicleModal(context),
+                  child: Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -183,7 +226,8 @@ class _InfoPurchase extends StatelessWidget {
                           mark: item.brand ?? '',
                           part: item.part ?? '',
                           quantity: item.quantity.toString(),
-                          priceTotal: item.unitPrice?.toStringAsFixed(2) ?? '0.00',
+                          priceTotal:
+                              item.unitPrice?.toStringAsFixed(2) ?? '0.00',
                         );
                       },
                     ),
@@ -197,6 +241,7 @@ class _InfoPurchase extends StatelessWidget {
   }
 }
 
+/// card para a observação
 class _InfoCardObservation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -216,14 +261,15 @@ class _InfoCardObservation extends StatelessWidget {
                 'Observação',
                 style: theme.textTheme.titleLarge,
               ),
-              GestureDetector(
-                onTap: () => showObservationModal(context),
-                child: Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: 28,
+              if (state.isDetails != true)
+                GestureDetector(
+                  onTap: () => showObservationModal(context),
+                  child: Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -249,7 +295,7 @@ class _InfoCardObservation extends StatelessWidget {
                       itemBuilder: (context, index) {
                         var item = state.observations[index];
                         return _ItemObservation(
-                            observation: item.observation ?? '',
+                            observation: item.description ?? '',
                             hour: '${item.date?.hour}:${item.date!.minute}',
                             date: DateFormat('dd/MM/yyyy').format(item.date!));
                       },
@@ -264,6 +310,7 @@ class _InfoCardObservation extends StatelessWidget {
   }
 }
 
+/// Opçao de selecionar a foto
 class _InfoPhoto extends StatelessWidget {
   final VoidCallback onUploadPressed;
 
@@ -316,8 +363,9 @@ class _InfoPhoto extends StatelessWidget {
                 padding: const EdgeInsets.all(15.0),
                 child: ElevatedButton.icon(
                   style: ButtonStyle(
-                      backgroundColor:
-                          WidgetStatePropertyAll(Colors.blue.shade700)),
+                    backgroundColor:
+                        WidgetStatePropertyAll(Colors.blue.shade700),
+                  ),
                   onPressed: onUploadPressed,
                   icon: const Icon(Icons.camera_alt_outlined),
                   label: const Text('Anexar ou tirar foto'),
@@ -330,6 +378,8 @@ class _InfoPhoto extends StatelessWidget {
   }
 }
 
+
+/// Util para campo de texto
 class _TextField extends StatelessWidget {
   const _TextField({
     required this.header,
@@ -338,16 +388,18 @@ class _TextField extends StatelessWidget {
     this.bigField = false,
     this.validator,
     this.maxLength = 50,
-    this.mask,
+    this.enabled = true,
+    this.textInputType,
   });
 
   final String header;
   final bool? isRequired;
   final bool? bigField;
+  final bool enabled;
   final TextEditingController controller;
   final FormFieldValidator<String>? validator;
   final int maxLength;
-  final TextInputFormatter? mask;
+  final TextInputType? textInputType;
 
   @override
   Widget build(BuildContext context) {
@@ -358,6 +410,8 @@ class _TextField extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextFormField(
+            enabled: enabled,
+            keyboardType: textInputType ?? TextInputType.text,
             decoration: InputDecoration(
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(color: Colors.blue.shade700, width: 1),
@@ -390,9 +444,6 @@ class _TextField extends StatelessWidget {
                 ],
               ),
             ),
-            inputFormatters: [
-              if (mask != null) mask!,
-            ],
             maxLength: maxLength,
             validator: validator,
             controller: controller,
@@ -403,6 +454,7 @@ class _TextField extends StatelessWidget {
   }
 }
 
+/// Botão para salvar serviço
 class _ButtonSave extends StatelessWidget {
   const _ButtonSave();
 
@@ -413,9 +465,8 @@ class _ButtonSave extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         if (state.formKey.currentState?.validate() ?? true) {
-          final result = await state.saveForm();
+          final result = await state.saveForm(context);
           if (result == true) {
-            //state.clearForm();
             Fluttertoast.showToast(
               msg: "Cadastrado com sucesso!",
               backgroundColor: Colors.green,
@@ -445,6 +496,36 @@ class _ButtonSave extends StatelessWidget {
           ),
           child: Center(
             child: Text('Salvar'),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+/// Botão para salvar serviço
+class _ButtonEdit extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final state = Provider.of<ServiceState>(context);
+
+    return GestureDetector(
+      onTap: () async {
+        state.isDetails = false;
+      },
+      child: SizedBox(
+        height: 50,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.blue.shade700,
+            borderRadius: BorderRadius.circular(
+              12,
+            ),
+            border: Border.all(color: Colors.blue.shade700, width: 1),
+          ),
+          child: Center(
+            child: Text('Editar'),
           ),
         ),
       ),
@@ -490,6 +571,7 @@ void showVehicleModal(BuildContext context) {
                         isRequired: true,
                         controller: state.priceUnitaryController,
                         maxLength: 10,
+                        textInputType: TextInputType.number,
                       ),
                     ),
                     SizedBox(
@@ -501,6 +583,7 @@ void showVehicleModal(BuildContext context) {
                         isRequired: true,
                         controller: state.quantityPartController,
                         maxLength: 10,
+                        textInputType: TextInputType.number,
                       ),
                     ),
                   ],
@@ -545,6 +628,7 @@ void showVehicleModal(BuildContext context) {
                     double.tryParse(state.priceUnitaryController.text);
                 var priceTotal = priceUnitary! * quantity!;
                 var purchasePart = PurchaseItem(
+                  unitPrice: priceUnitary,
                   part: state.partController.text,
                   quantity: quantity,
                   totalPrice: priceTotal,
@@ -611,7 +695,7 @@ void showObservationModal(BuildContext context) {
             ),
             onPressed: () {
               var observations = Observation(
-                observation: state.observationServiceController.text,
+                description: state.observationServiceController.text,
                 date: DateTime.now(),
               );
 
@@ -794,4 +878,127 @@ String? validator(String? value) {
     return 'Minimo de caracteres é 3';
   }
   return null;
+}
+
+class FinalizeButton extends StatelessWidget {
+  final int serviceId;
+
+  const FinalizeButton({super.key, required this.serviceId});
+
+  Future<Uint8List?> _chooseImageSource(BuildContext context) async {
+    final picker = ImagePicker();
+
+    return showModalBottomSheet<Uint8List?>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera),
+              title: const Text('Usar câmera'),
+              onTap: () async {
+                final picked =
+                    await picker.pickImage(source: ImageSource.camera);
+                Navigator.pop(
+                    ctx, picked != null ? await picked.readAsBytes() : null);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Escolher da galeria'),
+              onTap: () async {
+                final picked =
+                    await picker.pickImage(source: ImageSource.gallery);
+    if(context.mounted) {
+      Navigator.pop(
+          ctx, picked != null ? await picked.readAsBytes() : null,);
+    }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = context.read<ServiceState>(); // Aqui você pega o state
+
+    return GestureDetector(
+      onTap: () async {
+        final confirm = await showDialog<bool>(
+          context: context,
+          builder: (ctx) {
+            return AlertDialog(
+              title: const Text('Finalizar serviço'),
+              content: const Text('Deseja finalizar este serviço?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(false),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(ctx).pop(true),
+                  child: const Text('Confirmar'),
+                ),
+              ],
+            );
+          },
+        );
+
+        if (confirm != true) return;
+
+
+        final imageBytes = await _chooseImageSource(context);
+        if (imageBytes == null) {
+          if(context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Nenhuma imagem selecionada.',),
+                backgroundColor: Colors.red,),
+            );
+          }
+          state.loading = false;
+          return;
+        }
+
+        final updates = {
+          'exitImageBytes': imageBytes,
+          'exitDate': DateTime.now(),
+          'status': 1,
+        };
+
+        final repo = RepositoryService();
+
+        final success = await repo.updateService(serviceId, updates);
+        state.loading = false;
+
+        if (success && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Serviço finalizado com sucesso.'), backgroundColor: Colors.green),
+          );
+
+         context.pop();
+
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Erro ao finalizar o serviço.'), backgroundColor: Colors.red),
+          );
+        }
+      },
+      child: SizedBox(
+        height: 50,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.red.shade700,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.red.shade700, width: 1),
+          ),
+          child: const Center(
+            child: Text('Finalizar', style: TextStyle(color: Colors.white)),
+          ),
+        ),
+      ),
+    );
+  }
 }

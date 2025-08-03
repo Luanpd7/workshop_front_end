@@ -10,11 +10,11 @@ import 'api_config.dart';
 final Logger _logger = Logger('RepositoryCustomer');
 
 abstract class IRepositoryCustomer {
-  Future<void> addCustomer(Customer customer);
+  Future<int> addCustomer(Customer customer);
 
   Future<void> updateCustomer(Customer customer);
 
-  Future<List<Customer>> listCustomers();
+  Future<List<Customer>> listCustomers({int? idUser});
 
   Future<bool> deleteCustomer(int id);
 
@@ -27,7 +27,7 @@ class RepositoryCustomer implements IRepositoryCustomer {
   final baseURL = ApiConfig().baseUrl;
 
   @override
-  Future<void> addCustomer(Customer customer) async {
+  Future<int> addCustomer(Customer customer) async {
     try {
       final body = jsonEncode({
         "Customer": customer.toJson(),
@@ -39,13 +39,16 @@ class RepositoryCustomer implements IRepositoryCustomer {
         body: body,
       );
 
-      if (response.statusCode != 200) {
-        throw Exception();
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body)['id'];
       }
+
+
     } catch (e) {
       _logger.severe('Erro ao adicionar cliente: $e');
       rethrow;
     }
+    return 0;
   }
 
   @override
@@ -71,17 +74,28 @@ class RepositoryCustomer implements IRepositoryCustomer {
   }
 
   @override
-  Future<List<Customer>> listCustomers() async {
+  Future<List<Customer>> listCustomers({int? idUser}) async {
     try {
+      var uri = Uri.parse('$baseURL/user/listCustomers');
+
+      if (idUser != null) {
+        uri = uri.replace(queryParameters: {'idUser': idUser.toString()});
+      }
+
       final response = await http.get(
-        Uri.parse('$baseURL/user/listCustomers'),
+        uri,
         headers: {'Content-Type': 'application/json'},
       );
+
       if (response.statusCode != 200) {
-        throw Exception();
+        if (response.statusCode == 404) {
+          return [];
+        }
+        throw Exception('Falha ao carregar clientes. Status code: ${response.statusCode}');
       }
 
       final data = jsonDecode(response.body);
+
       List<Customer> list = [];
       for (var i in data) {
         var customer = Customer.fromJson(i);
@@ -91,8 +105,8 @@ class RepositoryCustomer implements IRepositoryCustomer {
       return list;
     } catch (e) {
       _logger.severe('Erro ao listar clientes: $e');
+      return [];
     }
-    return [];
   }
 
   @override

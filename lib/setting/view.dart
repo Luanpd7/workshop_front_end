@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
+/// Configurações do temas
 class SettingsState with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
 

@@ -23,6 +23,7 @@ class RepositoryUser implements IRepositoryUser{
   }) async {
     var userBody = jsonEncode(user.toJson());
 
+
     try{
       final response = await http.post(
         Uri.parse('$baseURL/user/add_usuario'),

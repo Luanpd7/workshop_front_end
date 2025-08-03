@@ -1,68 +1,223 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_echarts/flutter_echarts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:workshop_front_end/customer/view.dart';
 import 'package:workshop_front_end/login/view.dart';
+import '../domain/use_case_service.dart';
+import '../id_context.dart';
+import '../repository/repository_service.dart';
+import '../service/entities/service.dart';
 
-class HomeState with ChangeNotifier {}
+/// State da home
+class HomeState with ChangeNotifier {
+  String _selectedPeriod = '7d';
+  List<ServiceDetails> _services = [];
 
+  String get selectedPeriod => _selectedPeriod;
+
+  HomeState() {
+    _init();
+  }
+
+  /// Para selecionar periodo no gráfico
+  void setSelectedPeriod(String period) {
+    _selectedPeriod = period;
+    notifyListeners();
+  }
+
+  Future<void> _init() async {
+    final repository = RepositoryService();
+    final useCaseService = UseCaseService(repository);
+    _services = await useCaseService.getAllServices(idUser: UserContext().id);
+    notifyListeners();
+  }
+
+  /// Função responsável por agrupar os serviços pela data
+  Map<String, int> _groupServicesByDate() {
+    final now = DateTime.now();
+    final Map<String, int> result = {};
+
+    for (final service in _services) {
+      final date = service.entryDate;
+      if (_selectedPeriod == '7d' && date.isAfter(now.subtract(Duration(days: 6)))) {
+        final label = _formatWeekdayLabel(date);
+        result[label] = (result[label] ?? 0) + 1;
+      } else if (_selectedPeriod == '1m' && date.isAfter(DateTime(now.year, now.month - 1))) {
+        final label = 'Dia ${date.day}';
+        result[label] = (result[label] ?? 0) + 1;
+      } else if (_selectedPeriod == '1y' && date.isAfter(DateTime(now.year - 1))) {
+        final label = _monthName(date.month);
+        result[label] = (result[label] ?? 0) + 1;
+      }
+    }
+
+    return result;
+  }
+
+  List<int> get chartData {
+    final grouped = _groupServicesByDate();
+    return chartLabels.map((label) => grouped[label] ?? 0).toList();
+  }
+
+  /// Label do gráfico
+  List<String> get chartLabels {
+    final now = DateTime.now();
+    switch (_selectedPeriod) {
+      case '1m':
+        return List.generate(30, (i) => 'Dia ${i + 1}');
+      case '1y':
+        return [
+          'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
+          'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+        ];
+      case '7d':
+      default:
+        final weekDays = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+        final today = now.weekday;
+        return List.generate(7, (i) => weekDays[(today - 7 + i) % 7]);
+    }
+  }
+
+  String _formatWeekdayLabel(DateTime date) {
+    const days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+    return days[date.weekday - 1];
+  }
+
+  String _monthName(int month) {
+    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    return months[month - 1];
+  }
+}
+
+
+/// TELA PRINCIPAL
 class Home extends StatelessWidget {
   const Home({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text("Oficina do Paulo"),
-        backgroundColor: Colors.blue.shade700,
-      ),
-      drawer: _Drawer(),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            SizedBox(
-              height: 350,
-              width: 200,
-            ),
-            _ItemsHome(),
-          ],
+    return ChangeNotifierProvider(
+      create: (_) => HomeState(),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          title: const Text("Oficina do Paulo"),
+          backgroundColor: Colors.blue.shade700,
+        ),
+        drawer: const _Drawer(),
+        body: const SingleChildScrollView(
+          child: Column(
+            children: [
+              _ItemsHome(),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+/// Menus da home
 class _ItemsHome extends StatelessWidget {
   const _ItemsHome();
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<HomeState>();
+    final data = state.chartData;
+    final labels = state.chartLabels;
+    final period = state.selectedPeriod;
+
     return Column(
       children: [
+        const SizedBox(height: 10),
+        const Text(
+          'Serviços iniciados',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+          child: Row(
+            children: [
+              FilterChip(
+                label: const Text('7 dias'),
+                selected: period == '7d',
+                onSelected: (_) => state.setSelectedPeriod('7d'),
+              ),
+              const SizedBox(width: 10),
+              FilterChip(
+                label: const Text('1 mês'),
+                selected: period == '1m',
+                onSelected: (_) => state.setSelectedPeriod('1m'),
+              ),
+              const SizedBox(width: 10),
+              FilterChip(
+                label: const Text('1 ano'),
+                selected: period == '1y',
+                onSelected: (_) => state.setSelectedPeriod('1y'),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 250,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Echarts(
+              option: '''
+                {
+                  xAxis: {
+                    type: 'category',
+                    data: ${labels.map((e) => '"$e"').toList()}
+                  },
+                  yAxis: {
+                    type: 'value',
+                    name: 'Quantidade'
+                  },
+                  series: [{
+                    data: ${data},
+                    type: 'line',
+                    areaStyle: {}
+                  }]
+                }
+              ''',
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
         _ItemHome(
-            label: 'Registro de serviço',
-            icon: Icons.add,
-            subtitle: 'Registrar cliente e serviço',
-            onPressed: () {
-              context.push('/registerService');
-            }),
+          label: 'Registro de serviço',
+          icon: Icons.add,
+          subtitle: 'Registrar cliente e serviço',
+          onPressed: () {
+            var user = Provider.of<LoginState>(context, listen: false).user;
+            Provider.of<ServiceState>(context, listen: false);
+            context.push('/registerService');
+          },
+        ),
         _ItemHome(
-            label: 'Lista de clientes',
-            icon: Icons.supervised_user_circle,
-            subtitle: 'Visualizar clientes que já foram registrados',
-            onPressed: () {
-              context.push('/listCustomers');
-            }),
+          label: 'Lista de clientes',
+          icon: Icons.supervised_user_circle,
+          subtitle: 'Visualizar clientes que já foram registrados',
+          onPressed: () {
+            context.push('/listCustomers');
+          },
+        ),
         _ItemHome(
-            label: 'Lista de Serviços',
-            icon: Icons.account_balance,
-            subtitle: 'Visualizar serviços em andamentos ou concluídos',
-            onPressed: () {}),
+          label: 'Lista de Serviços',
+          icon: Icons.account_balance,
+          subtitle: 'Visualizar serviços em andamento ou concluídos',
+          onPressed: () {
+            context.push('/listService');
+          },
+        ),
       ],
     );
   }
 }
 
+/// Util da estrutura dos menus
 class _ItemHome extends StatelessWidget {
   const _ItemHome({
     required this.label,
@@ -134,6 +289,7 @@ class _ItemHome extends StatelessWidget {
   }
 }
 
+/// Barra lateral
 class _Drawer extends StatelessWidget {
   const _Drawer();
 
@@ -163,11 +319,6 @@ class _Drawer extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
             },
-          ),
-          ListTile(
-            leading: Icon(Icons.photo_filter),
-            title: Text("Digitalizar documento"),
-            onTap: () {},
           ),
           ListTile(
             leading: Icon(Icons.settings),

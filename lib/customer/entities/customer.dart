@@ -3,7 +3,9 @@ import 'address.dart';
 /// class responsible for customer info
 class Customer {
   Customer(
-      {this.id,
+      {
+        this.id,
+        this.idUser,
       this.name,
       this.surname,
       this.whatsapp,
@@ -13,6 +15,8 @@ class Customer {
       this.address});
 
   final int? id;
+
+  final int? idUser;
 
   /// name of customer
   final String? name;
@@ -38,6 +42,7 @@ class Customer {
   Map<String, dynamic> toJson() {
     return {
       "id": id,
+      "idUser": idUser,
       "name": name,
       "surname": surname,
       "whatsapp": whatsapp,
@@ -51,6 +56,7 @@ class Customer {
   factory Customer.fromJson(Map<String, dynamic> json) {
     return Customer(
       id: json['id'],
+      idUser: json['idUser'],
       name: json['name'],
       surname: json['surname'],
       email: json['email'],
