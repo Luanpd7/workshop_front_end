@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:workshop_front_end/service/entities/service.dart';
@@ -12,6 +13,31 @@ class ListServicesState with ChangeNotifier {
   ListServicesState() {
     _init();
   }
+
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController documentController = TextEditingController();
+  final TextEditingController plateController = TextEditingController();
+
+   String? _situationSelected;
+
+
+  String? get situationSelected => _situationSelected;
+
+  set situationSelected(String? value) {
+    _situationSelected = value;
+    notifyListeners();
+  }
+
+  String? _situationValue = 'todos';
+
+
+  String? get situationValue => _situationValue;
+
+  set situationValue(String? value) {
+    _situationValue = value;
+    notifyListeners();
+  }
+
 
   final listService = <dynamic>[];
   bool _loading = true;
@@ -29,8 +55,8 @@ class ListServicesState with ChangeNotifier {
   Future<void> loadData() async {
     final repository = RepositoryService();
     final useCaseService = UseCaseService(repository);
-
-    var result = await useCaseService.getAllServices(idUser: UserContext().id);
+    final id = UserContext().id == 1 ?  null :  UserContext().id ;
+    var result = await useCaseService.getAllServices(idUser: id);
 
     listService
       ..clear()
@@ -40,28 +66,46 @@ class ListServicesState with ChangeNotifier {
     notifyListeners();
   }
 
+
+  void changedSituation(String? situation){
+    if(situation == 'andamento' ){
+      situationValue = '0';
+      situationValue = '0';
+    }
+    else if(situation == 'finalizado' ){
+      situationValue = '1';
+    }
+   else if(situation == 'todos' ){
+      situationValue = '';
+    }
+  }
+
   /// Função de quando aplico o filtro
   Future<void> applyFilter(ServiceFilter filter) async {
     final repository = RepositoryService();
     final useCaseService = UseCaseService(repository);
 
-
+final id = UserContext().id == 1 ?  null :  UserContext().id ;
     listService..clear()..addAll(
         await useCaseService.getAllServices(
-          idUser: UserContext().id,
+          idUser: id,
           name: filter.name,
           status: filter.situation,
           document: filter.document,
           plate: filter.plate,
         ),
-
-
-
-
-
     )  ;
 
     notifyListeners();
+  }
+
+
+ void clearFilter(){
+     situationSelected = null;
+     nameController.clear();
+     documentController.clear();
+     plateController.clear();
+     notifyListeners();
   }
 }
 
@@ -264,21 +308,20 @@ class _FilterDialog extends StatelessWidget {
   final ListServicesState state;
   @override
   Widget build(BuildContext context) {
-    String? situationSelected;
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController documentController = TextEditingController();
-    final TextEditingController plateController = TextEditingController();
+
 
 
     return ChangeNotifierProvider.value(
       value: state,
       child: AlertDialog(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: const Text('Filtros'),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               DropdownButtonFormField<String>(
+               dropdownColor:   Theme.of(context).scaffoldBackgroundColor,
                 decoration: const InputDecoration(labelText: 'Situação'),
                 items: const [
                   DropdownMenuItem(
@@ -286,29 +329,27 @@ class _FilterDialog extends StatelessWidget {
                   DropdownMenuItem(
                       value: 'finalizado', child: Text('Finalizado')),
                 ],
-                value: situationSelected,
+                value: state.situationSelected,
+
                 onChanged: (value) {
-                  if(value == 'andamento'){
-                    situationSelected = '0';
-                  }else if(value == 'finalizado'){
-                    situationSelected = '1';
-                  }
+                  state.changedSituation(value);
+                  state.situationSelected = value;
 
                 },
               ),
               const SizedBox(height: 12),
               TextField(
-                controller: nameController,
+                controller: state.nameController,
                 decoration: const InputDecoration(labelText: 'Nome do Cliente'),
               ),
               const SizedBox(height: 12),
               TextField(
-                controller: documentController,
+                controller: state.documentController,
                 decoration: const InputDecoration(labelText: 'Documento'),
               ),
               const SizedBox(height: 12),
               TextField(
-                controller: plateController,
+                controller: state.plateController,
                 decoration: const InputDecoration(labelText: 'Placa do Veículo'),
               ),
             ],
@@ -316,17 +357,22 @@ class _FilterDialog extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            child: const Text('Cancelar'),
-            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Limpar Filtro'),
+            onPressed: () async {
+              state.clearFilter();
+              await state.applyFilter(ServiceFilter());
+              context.pop();
+            },
           ),
           ElevatedButton(
+            style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.blueAccent)),
             child: const Text('Aplicar Filtros'),
             onPressed: () async {
               final filter = ServiceFilter(
-                situation: situationSelected,
-                name: nameController.text,
-                document: documentController.text,
-                plate: plateController.text,
+                situation: state.situationValue,
+                name: state.nameController.text,
+                document: state.documentController.text,
+                plate: state.plateController.text,
               );
 
 

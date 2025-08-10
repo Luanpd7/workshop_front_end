@@ -70,14 +70,15 @@ class _Content extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              ButtonPdf(details),
               SizedBox(
-                height: 35,
+                height: 20,
               ),
               const Text(
                 'Dados do Cliente',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -146,12 +147,12 @@ class _Content extends StatelessWidget {
                   Spacer()
                 ],
               ),
-              const SizedBox(height: 35),
+              const SizedBox(height: 45),
               const Text(
                 'Dados do Veículo',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
@@ -217,12 +218,43 @@ class _Content extends StatelessWidget {
                   const Spacer(),
                 ],
               ),
-              const SizedBox(height: 35),
+              const SizedBox(height: 45),
+              const Text(
+                'Dados do Mecânico',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Nome',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(details.userName),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('E-mail',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(details.userEmail),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const SizedBox(height: 45),
               const Text(
                 'Itens de compra do serviço',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Column(
                   children: details.purchaseItems.map(
                 (item) {
@@ -301,19 +333,22 @@ class _Content extends StatelessWidget {
                         ],
                       ),
                       if (details.purchaseItems.last != item)
-                        Divider(
-                          color: Colors.blueAccent,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Divider(
+                            color: Color.fromRGBO(207, 196, 255, 1.0),
+                          ),
                         ),
                     ],
                   );
                 },
               ).toList()),
-              const SizedBox(height: 35),
+              const SizedBox(height: 45),
               const Text(
                 'Observação do serviço',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Column(
                   children: details.observations.map(
                 (item) {
@@ -349,8 +384,11 @@ class _Content extends StatelessWidget {
                         ],
                       ),
                       if (details.observations.last != item)
-                        Divider(
-                          color: Colors.blueAccent,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Divider(
+                            color: Color.fromRGBO(207, 196, 255, 1.0),
+                          ),
                         ),
                     ],
                   );

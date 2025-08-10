@@ -22,12 +22,21 @@ class LoginState with ChangeNotifier {
 
   bool _isSignUp = false;
 
+  bool _isManager = false;
+
   bool get isSignUp => _isSignUp;
 
   User get user => _user;
 
+  bool get isManager => _isManager;
+
   set user(User value) {
     _user = value;
+    notifyListeners();
+  }
+
+  set isManager(bool value) {
+    _isManager = value;
     notifyListeners();
   }
 
@@ -56,6 +65,9 @@ class LoginState with ChangeNotifier {
       return await useCaseUser.addNewUser(user: user);
     } else {
       userResult = await useCaseUser.getLoginUser(user: user);
+
+
+      isManager = userResult?.id == 1;
 
       UserContext().id = userResult?.id;
 
@@ -186,14 +198,16 @@ class Login extends StatelessWidget {
                                 bool result = await state.saveForm(
                                     user: user, context: context);
                                 if (result) {
+
                                   if (context.mounted) {
-                                    context.go('/home');
+                                    context.go('/home',extra: state.isManager);
                                   }
                                 } else if (context.mounted) {
                                   showDialog(
                                       context: context,
                                       builder: (BuildContext context) {
                                         return AlertDialogUtil(
+
                                           title: 'Erro',
                                           content: 'Credênciais inválidas!',
                                         );

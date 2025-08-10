@@ -1,5 +1,6 @@
 import 'package:logging/logging.dart';
 
+import '../login/entities/login.dart';
 import '../repository/repository_service.dart';
 import '../service/entities/service.dart';
 import '../service/entities/vehicle.dart';
@@ -70,4 +71,6 @@ class UseCaseService {
 
   Future<bool> updateService(int serviceId, Map<String, dynamic> updates) =>
       repository.updateService(serviceId, updates);
+
+  Future<List<UserRanking>> getRankingUsers() => repository.getRankingUsers();
 }

@@ -50,7 +50,7 @@ void main() async {
           create: (context) => SettingsState(),
         ),
         ChangeNotifierProvider<ServiceState>(
-          create: (context) => ServiceState(),
+          create: (context) => ServiceState(isDetails: false),
         ),
       ],
       child: const MyApp(),

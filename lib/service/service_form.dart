@@ -4,12 +4,16 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
 import 'package:provider/provider.dart';
 import '../customer/view.dart';
 import '../repository/repository_service.dart';
 import 'entities/service'
     '.dart';
 import 'entities/vehicle.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+
 
 /// Tela responsável pelo formulario de serviço,
 /// usado na tela segunda tab quando vou cadastrar
@@ -30,6 +34,7 @@ class RegisterService extends StatelessWidget {
           padding: const EdgeInsets.all(18.0),
           child: Consumer<ServiceState>(
             builder: (context, state, Widget? _) {
+              state.isDetails = false;
               if (state.loading) {
                 return Center(child: CircularProgressIndicator());
               }
@@ -45,7 +50,8 @@ class RegisterService extends StatelessWidget {
                       ),
                       _ButtonEdit(),
                     ] else
-                      _ButtonSave(),
+                      if(state.isEdit)_ButtonSaveEdit(service!.serviceId)
+                      else _ButtonSave(),
                     _InfoCardService(),
                     _InfoPurchase(),
                     _InfoCardObservation(),
@@ -104,6 +110,8 @@ class _InfoCardService extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 20),
                     child: DropdownButtonFormField(
+                      value: state.selectedVehicle,
+                      dropdownColor: Theme.of(context).scaffoldBackgroundColor,
                       decoration: InputDecoration(
                         label: Text(
                           'Veículo',
@@ -227,7 +235,7 @@ class _InfoPurchase extends StatelessWidget {
                           part: item.part ?? '',
                           quantity: item.quantity.toString(),
                           priceTotal:
-                              item.unitPrice?.toStringAsFixed(2) ?? '0.00',
+                              item.totalPrice?.toStringAsFixed(2) ?? '0.00',
                         );
                       },
                     ),
@@ -513,6 +521,7 @@ class _ButtonEdit extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         state.isDetails = false;
+        state.isEdit = true;
       },
       child: SizedBox(
         height: 50,
@@ -526,6 +535,234 @@ class _ButtonEdit extends StatelessWidget {
           ),
           child: Center(
             child: Text('Editar'),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Botão para salvar serviço
+class _ButtonSaveEdit extends StatelessWidget {
+
+  _ButtonSaveEdit(this.serviceId);
+  final int serviceId;
+  @override
+  Widget build(BuildContext context) {
+    final state = Provider.of<ServiceState>(context);
+
+    return GestureDetector(
+      onTap: () async {
+        final updates = {
+        'model' : 'Cruze',
+        };
+
+        final repo = RepositoryService();
+
+        final success = await repo.updateService(serviceId, updates);
+      },
+      child: SizedBox(
+        height: 50,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.blue.shade700,
+            borderRadius: BorderRadius.circular(
+              12,
+            ),
+            border: Border.all(color: Colors.blue.shade700, width: 1),
+          ),
+          child: Center(
+            child: Text('Salvar Alterações'),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ButtonPdf extends StatelessWidget {
+  ButtonPdf(this.serviceDetails);
+  final ServiceDetails serviceDetails;
+
+  Future<void> _generatePdf(BuildContext context) async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text("Detalhes do Serviço  #${serviceDetails.serviceId}",
+                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 16),
+              pw.Text("Dados do cliente",
+                  style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+
+
+              pw.SizedBox(height: 10),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("Nome: ${serviceDetails.customerName}"),
+                  pw.Text("Documento: ${serviceDetails.document}"),
+                ],
+              ),
+              pw.SizedBox(height: 5),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("E-mail: ${serviceDetails.email}"),
+                  pw.Text("Whatsapp: ${serviceDetails.whatsapp}"),
+                ],
+              ),
+              pw.SizedBox(height: 5),
+              pw.Text("Observação: ${serviceDetails.customerObservation}"),
+              pw.SizedBox(height: 16),
+
+              pw.Text("Dados do veículo",
+                  style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+
+
+              pw.SizedBox(height: 10),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("Modelo: ${serviceDetails.vehicleModel}"),
+                  pw.Text("Cor: ${serviceDetails.vehicleColor}"),
+                ],
+              ),
+              pw.SizedBox(height: 5),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("Placa: ${serviceDetails.vehiclePlate}"),
+                  pw.Text("Ano: ${serviceDetails.manufactureYear}"),
+                ],
+              ),
+              pw.SizedBox(height: 5),
+              pw.Text("Tipo de veículo: ${serviceDetails.vehicleType}"),
+              pw.SizedBox(height: 16),
+
+
+              pw.Text("Dados do mecânico",
+                  style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+
+              pw.SizedBox(height: 5),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("Nome: ${serviceDetails.userName}"),
+                  pw.Text("E-mail: ${serviceDetails.userEmail}"),
+                ],
+              ),
+              pw.SizedBox(height: 16),
+
+              pw.Text("Dados do serviço",
+                  style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+
+              pw.SizedBox(height: 5),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("Data de entrada: ${DateFormat('dd/MM/yyyy').format(serviceDetails.entryDate)}"),
+                  pw.Text("Data de saída: ${DateFormat('dd/MM/yyyy').format(serviceDetails.exitDate!)}"),
+                ],
+              ),
+
+              if (serviceDetails.purchaseItems.isNotEmpty) ...[
+                pw.SizedBox(height: 16),
+                pw.Text(
+                  "Itens da Compra",
+                  style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+                ),
+                pw.SizedBox(height: 10),
+                pw.Table.fromTextArray(
+                  headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  headerDecoration: pw.BoxDecoration(color: PdfColors.grey300),
+                  cellAlignment: pw.Alignment.centerLeft,
+                  headers: ['Peça', 'Marca', 'Quantidade', 'Preço Unit.', 'Total'],
+                  data: serviceDetails.purchaseItems.map((item) {
+                    final precoUnit = item.unitPrice?.toStringAsFixed(2);
+                    final total = (item.unitPrice! * item.quantity!.toDouble()).toStringAsFixed(2);
+                    return [
+                      item.part,
+                      item.brand,
+                      item.quantity.toString(),
+                      "R\$ $precoUnit",
+                      "R\$ $total",
+                    ];
+                  }).toList(),
+                ),
+                pw.SizedBox(height: 16),
+              ],
+              if (serviceDetails.observations.isNotEmpty) ...[
+                pw.SizedBox(height: 16),
+                pw.Text(
+                  "Observações do serviço",
+                  style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+                ),
+                pw.SizedBox(height: 10),
+                pw.Table.fromTextArray(
+                  headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  headerDecoration: pw.BoxDecoration(color: PdfColors.grey300),
+                  cellAlignment: pw.Alignment.centerLeft,
+                  headers: ['Descrição', 'Data'],
+                  data: serviceDetails.observations.map((item) {
+                    return [
+                      item.description,
+                      DateFormat('dd/MM/yyyy  HH:mm')
+                          .format(item.date!)
+
+                    ];
+                  }).toList(),
+                ),
+                pw.SizedBox(height: 16),
+              ],
+
+
+
+
+              pw.SizedBox(height: 5),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text("Valor final:  R\$ ${serviceDetails.sumValue?.toStringAsFixed(2)}"),
+                ],
+              ),
+              pw.SizedBox(height: 16),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = Provider.of<ServiceState>(context);
+
+    return GestureDetector(
+      onTap: () async {
+        await _generatePdf(context);
+      },
+      child: SizedBox(
+        height: 50,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.blue.shade700,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.blue.shade700, width: 1),
+          ),
+          child: const Center(
+            child: Text(
+              'Gerar PDF',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ),
       ),
@@ -746,7 +983,7 @@ class _ItemPurchase extends StatelessWidget {
                   ],
                 ),
                 SizedBox(
-                  width: 145,
+                  width: 150,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
@@ -776,14 +1013,16 @@ class _ItemPurchase extends StatelessWidget {
                   ],
                 ),
                 SizedBox(
-                  width: 145,
+                  width: 150,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
                       Text('Preço total: ', style: TextStyle(fontSize: 15)),
-                      Text('R\$ $priceTotal',
-                          style: TextStyle(color: theme.disabledColor),
-                          overflow: TextOverflow.ellipsis),
+                      Expanded(
+                        child: Text('R\$ $priceTotal',
+                            style: TextStyle(color: theme.disabledColor),
+                            overflow: TextOverflow.ellipsis),
+                      ),
                     ],
                   ),
                 ),
@@ -931,6 +1170,7 @@ class FinalizeButton extends StatelessWidget {
           context: context,
           builder: (ctx) {
             return AlertDialog(
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               title: const Text('Finalizar serviço'),
               content: const Text('Deseja finalizar este serviço?'),
               actions: [
@@ -939,6 +1179,7 @@ class FinalizeButton extends StatelessWidget {
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
+                  style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.blueAccent)),
                   onPressed: () => Navigator.of(ctx).pop(true),
                   child: const Text('Confirmar'),
                 ),
@@ -962,10 +1203,17 @@ class FinalizeButton extends StatelessWidget {
           return;
         }
 
+        var sumValue = 0.0;
+
+        for (var e in state.purchasePart) {
+          sumValue += e.totalPrice!.toDouble() ;
+        }
+
         final updates = {
           'exitImageBytes': imageBytes,
           'exitDate': DateTime.now(),
           'status': 1,
+          'sumValue' :sumValue,
         };
 
         final repo = RepositoryService();

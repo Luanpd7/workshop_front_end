@@ -168,12 +168,17 @@ class ServiceDetails {
   final int manufactureYear;
   final int vehicleTypeId;
 
+  final String userName;
+  final String userEmail;
+
   final List<Observation> observations;
    final List<PurchaseItem> purchaseItems;
 
 
   final String? imageBytes;
   final String? exitImageBytes;
+
+  final double? sumValue;
 
 
   ServiceDetails({
@@ -192,6 +197,8 @@ class ServiceDetails {
     required this.vehicleId,
     required this.vehicleModel,
     required this.vehicleColor,
+    required this.userEmail,
+    required this.userName,
     required this.vehiclePlate,
     required this.manufactureYear,
     required this.vehicleTypeId,
@@ -199,6 +206,7 @@ class ServiceDetails {
     required this.purchaseItems,
     this.imageBytes,
     this.exitImageBytes,
+    this.sumValue,
   });
 
   factory ServiceDetails.fromJson(Map<String, dynamic> json) {
@@ -220,6 +228,9 @@ class ServiceDetails {
       vehicleId: json['vehicle_id'] ?? 0,
       vehicleModel: json['vehicle_model'] ?? '',
       vehicleColor: json['vehicle_color'] ?? '',
+      userEmail: json['user_email'] ?? '',
+      userName: json['user_name'] ?? '',
+      sumValue: json['sumValue'] ?? '',
       vehiclePlate: json['vehicle_plate'] ?? '',
       manufactureYear: json['manufacture_year'] ?? 0,
       vehicleTypeId: json['vehicle_type_id'] ?? 0,

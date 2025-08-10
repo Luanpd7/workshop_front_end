@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
+import 'package:workshop_front_end/login/entities/login.dart';
 import '../service/entities/vehicle.dart';
 import '../service/entities/service'
     '.dart';
@@ -21,6 +22,8 @@ abstract class IRepositoryService {
     String? plate,});
 
   Future<bool> updateService(int serviceId, Map<String, dynamic> updates);
+
+  Future<List<UserRanking>> getRankingUsers();
 
 }
 
@@ -52,6 +55,33 @@ class RepositoryService implements IRepositoryService {
       return [];
     }
   }
+
+  @override
+  Future<List<UserRanking>> getRankingUsers() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseURL/service/rankingUsers'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Erro ao buscar veículos');
+      }
+
+      final data = jsonDecode(response.body);
+      List<UserRanking> list = [];
+
+      for (var item in data) {
+        list.add(UserRanking.fromJson(item));
+      }
+
+      return list;
+    } catch (e) {
+      _logger.severe('Erro ao buscar veículos: $e');
+      return [];
+    }
+  }
+
 
   @override
   Future<bool> addService(Service service) async {
@@ -147,6 +177,7 @@ class RepositoryService implements IRepositoryService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
+        print('deuu $data');
         final services = data.map((e) => ServiceDetails.fromJson(e)).toList();
         return services;
       } else {

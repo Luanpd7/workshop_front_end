@@ -12,6 +12,7 @@ class AlertDialogUtil extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       title: Text(title),
       content: Text(content),
       actions: [
@@ -20,11 +21,13 @@ class AlertDialogUtil extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             ElevatedButton(
+              style: ButtonStyle(backgroundColor:  WidgetStatePropertyAll( Colors.lightBlue.shade900,),),
               onPressed: Navigator.of(context).pop,
               child: Text('Voltar'),
             ),
             if(labelButtonPrimary != null)
             ElevatedButton(
+              style: ButtonStyle(backgroundColor:  WidgetStatePropertyAll( Colors.lightBlue.shade900,),),
               onPressed: onPressedPrimary,
               child: Text(labelButtonPrimary!),
             ),

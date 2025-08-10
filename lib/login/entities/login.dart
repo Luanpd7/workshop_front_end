@@ -29,3 +29,25 @@ class User {
     return 'User{id $id, name: $name, email: $email, password: $password}';
   }
 }
+
+class UserRanking {
+  UserRanking({ this.name, this.serviceLength});
+
+  final String? name;
+  final String? serviceLength;
+
+
+  factory UserRanking.fromJson(Map<String, dynamic> json) {
+    return UserRanking(
+      name: json['name'],
+      serviceLength: json['serviceLength'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "name": name,
+      'serviceLength': serviceLength,
+    };
+  }
+}

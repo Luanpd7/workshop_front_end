@@ -16,8 +16,16 @@ class RouterApp {
         builder: (context, state) => Login(),
       ),
       GoRoute(
+
         path: '/home',
-        builder: (context, state) => Home(),
+        builder: (context, state) {
+
+  final isManager = state.extra as bool?;
+  return Home(isManager: isManager,);
+  }
+
+
+
       ),
       GoRoute(
         path: '/listCustomers',
@@ -34,6 +42,10 @@ class RouterApp {
       GoRoute(
         path: '/settings',
         builder: (context, state) => Settings(),
+      ),
+      GoRoute(
+        path: '/homeManager',
+        builder: (context, state) => ServiceTab(),
       ),
     ],
   );

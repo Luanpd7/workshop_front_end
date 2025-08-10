@@ -49,7 +49,9 @@ class ServiceState with ChangeNotifier {
 
   final formKey = GlobalKey<FormState>();
 
-  bool _isDetails = false;
+  bool _isDetails = true;
+
+  bool _isEdit = false;
 
   double? _sumValue;
 
@@ -87,6 +89,8 @@ class ServiceState with ChangeNotifier {
   double? get sumValue => _sumValue;
 
   get isDetails => _isDetails;
+
+  get isEdit => _isEdit;
 
   File? get imageFile => _imageFile;
 
@@ -132,13 +136,21 @@ class ServiceState with ChangeNotifier {
     notifyListeners();
   }
 
+  set isEdit(value) {
+    _isEdit = value;
+    notifyListeners();
+  }
+
   Future<void> _init(
       {Customer? customer,
       bool? details,
       ServiceDetails? serviceDetails}) async {
     loadVehicles();
+    print('entrou');
+    print('details $details');
+    isDetails = details;
     if (serviceDetails != null) {
-      isDetails = details;
+
       fillFieldsFromServiceDetails(serviceDetails);
     }
 
@@ -394,7 +406,6 @@ class RegisterCustomer extends StatelessWidget {
           padding: const EdgeInsets.all(18.0),
           child: Consumer<ServiceState>(
             builder: (context, state, Widget? _) {
-              state.isDetails = isDetails;
               return Form(
                 key: state.formKey,
                 child: Column(

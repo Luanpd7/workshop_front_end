@@ -3,8 +3,10 @@ import 'package:flutter_echarts/flutter_echarts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:workshop_front_end/customer/view.dart';
+import 'package:workshop_front_end/login/entities/login.dart';
 import 'package:workshop_front_end/login/view.dart';
 import '../domain/use_case_service.dart';
+import '../home_manager/home_manager_view.dart';
 import '../id_context.dart';
 import '../repository/repository_service.dart';
 import '../service/entities/service.dart';
@@ -13,6 +15,11 @@ import '../service/entities/service.dart';
 class HomeState with ChangeNotifier {
   String _selectedPeriod = '7d';
   List<ServiceDetails> _services = [];
+
+  List<UserRanking> rankingUsers = [];
+
+  bool loading = false;
+
 
   String get selectedPeriod => _selectedPeriod;
 
@@ -27,9 +34,15 @@ class HomeState with ChangeNotifier {
   }
 
   Future<void> _init() async {
+    loading = true;
+    notifyListeners();
     final repository = RepositoryService();
     final useCaseService = UseCaseService(repository);
-    _services = await useCaseService.getAllServices(idUser: UserContext().id);
+    final id = UserContext().id;
+    _services = await useCaseService.getAllServices(idUser: id == 1 ? null : id);
+    rankingUsers = await useCaseService.getRankingUsers();
+
+    loading = false;
     notifyListeners();
   }
 
@@ -58,6 +71,20 @@ class HomeState with ChangeNotifier {
   List<int> get chartData {
     final grouped = _groupServicesByDate();
     return chartLabels.map((label) => grouped[label] ?? 0).toList();
+  }
+
+  Icon? colorRanking(int index){
+    switch (index) {
+      case 1:
+        return Icon(Icons.emoji_events , color: Colors.amber,);
+      case 2:
+        return Icon(Icons.emoji_events , color: Colors.grey,);
+      case 3:
+        return Icon(Icons.emoji_events , color: Colors.brown,);
+      default :
+        return null;
+    }
+
   }
 
   /// Label do gráfico
@@ -93,7 +120,9 @@ class HomeState with ChangeNotifier {
 
 /// TELA PRINCIPAL
 class Home extends StatelessWidget {
-  const Home({super.key});
+   Home({this.isManager = false});
+
+  bool? isManager;
 
   @override
   Widget build(BuildContext context) {
@@ -106,10 +135,11 @@ class Home extends StatelessWidget {
           backgroundColor: Colors.blue.shade700,
         ),
         drawer: const _Drawer(),
-        body: const SingleChildScrollView(
+        body: SingleChildScrollView(
           child: Column(
             children: [
-              _ItemsHome(),
+              isManager == false ?
+              _ItemsHome() : HomeManager()
             ],
           ),
         ),
