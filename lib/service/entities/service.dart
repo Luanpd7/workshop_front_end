@@ -1,4 +1,8 @@
 
+import 'package:flutter/services.dart';
+
+
+
 
 class Service {
   final int? id;
@@ -175,8 +179,8 @@ class ServiceDetails {
    final List<PurchaseItem> purchaseItems;
 
 
-  final String? imageBytes;
-  final String? exitImageBytes;
+  final Uint8List? imageBytes;
+  final Uint8List? exitImageBytes;
 
   final double? sumValue;
 
@@ -242,6 +246,13 @@ class ServiceDetails {
           ?.map((p) => PurchaseItem.fromJson(p as Map<String, dynamic>))
           .toList() ??
           [],
+      imageBytes: json['image'] != null
+          ? Uint8List.fromList(List<int>.from(json['image']))
+          : Uint8List(0),
+
+      exitImageBytes: json['exit_image'] != null
+          ? Uint8List.fromList(List<int>.from(json['exit_image']))
+          : Uint8List(0),
     );
   }
 }

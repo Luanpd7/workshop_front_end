@@ -177,7 +177,6 @@ class RepositoryService implements IRepositoryService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        print('deuu $data');
         final services = data.map((e) => ServiceDetails.fromJson(e)).toList();
         return services;
       } else {

@@ -41,6 +41,8 @@ class ServiceState with ChangeNotifier {
 
   File? _imageFile;
 
+  Uint8List? imageBytes;
+
   int? idCustomer;
 
   List<Observation> observations = [];
@@ -49,7 +51,7 @@ class ServiceState with ChangeNotifier {
 
   final formKey = GlobalKey<FormState>();
 
-  bool _isDetails = true;
+  bool _isDetails = false;
 
   bool _isEdit = false;
 
@@ -293,6 +295,7 @@ class ServiceState with ChangeNotifier {
     roadController.text = customer.address?.road ?? '';
     numberController.text = customer.address?.number ?? '';
     neighborhoodController.text = customer.address?.neighborhood ?? '';
+
   }
 
   /// responsável por preencher os campos do veiculo quando for detqlhes
@@ -305,6 +308,15 @@ class ServiceState with ChangeNotifier {
         VehicleType(id: service.vehicleTypeId, name: service.vehicleType);
     observations.addAll(service.observations);
     purchasePart.addAll(service.purchaseItems);
+
+
+    if (service.imageBytes != null ) {
+      try {
+        imageBytes = service.imageBytes;
+      } catch (e) {
+        imageBytes = null;
+      }
+    }
   }
 
   /// Função para limpar campos

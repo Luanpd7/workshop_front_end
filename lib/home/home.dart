@@ -197,6 +197,10 @@ class _ItemsHome extends StatelessWidget {
             child: Echarts(
               option: '''
                 {
+                  tooltip: {
+                   trigger: 'axis',
+                   formatter: '{b}: {c} serviços'
+                  },
                   xAxis: {
                     type: 'category',
                     data: ${labels.map((e) => '"$e"').toList()}

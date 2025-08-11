@@ -31,7 +31,7 @@ if(state.loading){
       children: [
         const SizedBox(height: 10),
         const Text(
-          'Serviços iniciados',
+          'Serviços finalizados',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         Padding(
@@ -65,6 +65,10 @@ if(state.loading){
             child: Echarts(
               option: '''
                 {
+                  tooltip: {
+        trigger: 'axis',
+        formatter: '{b}: {c} serviços'
+      },
                   xAxis: {
                     type: 'category',
                     data: ${labels.map((e) => '"$e"').toList()}

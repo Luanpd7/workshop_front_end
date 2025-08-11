@@ -34,7 +34,6 @@ class RegisterService extends StatelessWidget {
           padding: const EdgeInsets.all(18.0),
           child: Consumer<ServiceState>(
             builder: (context, state, Widget? _) {
-              state.isDetails = false;
               if (state.loading) {
                 return Center(child: CircularProgressIndicator());
               }
@@ -318,7 +317,6 @@ class _InfoCardObservation extends StatelessWidget {
   }
 }
 
-/// Opçao de selecionar a foto
 class _InfoPhoto extends StatelessWidget {
   final VoidCallback onUploadPressed;
 
@@ -328,6 +326,7 @@ class _InfoPhoto extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = Provider.of<ServiceState>(context, listen: true);
     final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -338,30 +337,24 @@ class _InfoPhoto extends StatelessWidget {
             style: theme.textTheme.titleLarge,
           ),
         ),
+
+        // 1º caso: imagem nova do dispositivo
         if (state.imageFile != null)
-          Align(
-            alignment: Alignment.center,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 20, bottom: 20),
-                  child: Image.file(
-                    state.imageFile!,
-                    height: 200,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => state.imageFile = null,
-                  child: Icon(
-                    Icons.delete,
-                    color: Colors.redAccent,
-                    size: 30,
-                  ),
-                )
-              ],
-            ),
+          _buildImageWidget(
+            context,
+            Image.file(state.imageFile!, height: 200, fit: BoxFit.cover),
+            onDelete: () => state.imageFile = null,
           )
+
+        // 2º caso: imagem já salva no banco
+        else if (state.imageBytes != null)
+          _buildImageWidget(
+            context,
+            Image.memory(state.imageBytes!, height: 200, fit: BoxFit.cover),
+            onDelete: () => state.imageBytes = null,
+          )
+
+        // 3º caso: nenhuma imagem
         else
           Align(
             alignment: Alignment.center,
@@ -372,7 +365,7 @@ class _InfoPhoto extends StatelessWidget {
                 child: ElevatedButton.icon(
                   style: ButtonStyle(
                     backgroundColor:
-                        WidgetStatePropertyAll(Colors.blue.shade700),
+                    WidgetStatePropertyAll(Colors.blue.shade700),
                   ),
                   onPressed: onUploadPressed,
                   icon: const Icon(Icons.camera_alt_outlined),
@@ -384,7 +377,31 @@ class _InfoPhoto extends StatelessWidget {
       ],
     );
   }
+
+  Widget _buildImageWidget(BuildContext context, Widget imageWidget, {VoidCallback? onDelete}) {
+    return Align(
+      alignment: Alignment.center,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 20, bottom: 20),
+            child: imageWidget,
+          ),
+          if (onDelete != null)
+            GestureDetector(
+              onTap: onDelete,
+              child: const Icon(
+                Icons.delete,
+                color: Colors.redAccent,
+                size: 30,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 }
+
 
 
 /// Util para campo de texto
@@ -731,6 +748,39 @@ class ButtonPdf extends StatelessWidget {
                 ],
               ),
               pw.SizedBox(height: 16),
+            ],
+          );
+        },
+      ),
+    );
+
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              if (serviceDetails.imageBytes != null && serviceDetails.imageBytes!.isNotEmpty) ...[
+                pw.Text("Antes", style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 10),
+                pw.Image(
+                  pw.MemoryImage(serviceDetails.imageBytes!),
+                  width: 400,
+                  height: 300,
+                  fit: pw.BoxFit.cover,
+                ),
+                pw.SizedBox(height: 20),
+              ],
+              if (serviceDetails.exitImageBytes != null && serviceDetails.exitImageBytes!.isNotEmpty) ...[
+                pw.Text("Depois", style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 10),
+                pw.Image(
+                  pw.MemoryImage(serviceDetails.exitImageBytes!),
+                  width: 400,
+                  height: 300,
+                  fit: pw.BoxFit.cover,
+                ),
+              ],
             ],
           );
         },
