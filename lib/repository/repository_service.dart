@@ -154,6 +154,37 @@ class RepositoryService implements IRepositoryService {
   }
 
 
+  Future<Map<String, Uint8List>?> getImageServiceById(int id) async {
+    try {
+      final uri = Uri.parse('$baseURL/service/servicesImage')
+          .replace(queryParameters: {'id': id.toString()});
+
+      final response = await http.get(uri);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+
+        final imageBytes = base64Decode(data['image']);
+        final exitImageBytes = base64Decode(data['exit_image']);
+
+        return {
+          "image": imageBytes,
+          "exit_image": exitImageBytes,
+        };
+      } else if (response.statusCode == 404) {
+        return null;
+      } else {
+        throw Exception(
+            'Erro ao buscar imagem do serviço: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Erro ao buscar imagem do serviço: $e');
+      return null;
+    }
+  }
+
+
+
   @override
   Future<List<ServiceDetails>> getAllServices({int? idUser,
     String? status,
@@ -161,6 +192,7 @@ class RepositoryService implements IRepositoryService {
     String? document,
     String? plate,}) async {
     try {
+
       final Map<String, String> queryParams = {};
 
       if (idUser != null) queryParams['userId'] = idUser.toString();
@@ -170,13 +202,17 @@ class RepositoryService implements IRepositoryService {
       if (plate?.isNotEmpty == true) queryParams['plate'] = plate!;
 
 
+
       final uri = Uri.parse('$baseURL/service/services')
           .replace(queryParameters: queryParams);
 
+
       final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
+
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
+
         final services = data.map((e) => ServiceDetails.fromJson(e)).toList();
         return services;
       } else {

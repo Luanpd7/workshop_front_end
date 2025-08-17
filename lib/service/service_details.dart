@@ -6,16 +6,35 @@ import 'package:workshop_front_end/service/service_form.dart';
 import '../customer/view.dart';
 import 'package:intl/intl.dart';
 
+import '../domain/use_case_service.dart';
+import '../repository/repository_service.dart';
+
 class ServiceDetailsState with ChangeNotifier {
   ServiceDetailsState({this.serviceDetails, required this.context}) {
     _init(serviceDetails!);
   }
 
+  bool _loading =  true;
   ServiceDetails? serviceDetails;
   final BuildContext context;
 
   Future<void> _init(ServiceDetails serviceDetailsInitialize) async {
+
+    final repository = RepositoryService();
+    final useCaseService = UseCaseService(repository);
+    var result = await useCaseService.getImageServiceById(serviceDetailsInitialize.serviceId);
+
+
     serviceDetails = serviceDetailsInitialize;
+
+    if (result != null) {
+      serviceDetails = serviceDetails!.copyWith(
+        imageBytes: result['image'],
+        exitImageBytes: result['exit_image'],
+      );
+    }
+    _loading = false;
+    notifyListeners();
   }
 }
 
@@ -41,7 +60,9 @@ class ServiceDetail extends StatelessWidget {
                 title: Text("Detalhes do serviço #${serviceDetails.serviceId}"),
                 backgroundColor: Colors.blue.shade700,
               ),
-              body: state.serviceDetails?.status == 0
+              body: state._loading == true ?    Center(
+                child: CircularProgressIndicator(),
+          ) :  state.serviceDetails?.status == 0
                   ? RegisterService(
                       isDetails: true,
                       service: state.serviceDetails,

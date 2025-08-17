@@ -213,7 +213,66 @@ class ServiceDetails {
     this.sumValue,
   });
 
-  factory ServiceDetails.fromJson(Map<String, dynamic> json) {
+
+  ServiceDetails copyWith({
+    int? serviceId,
+    DateTime? entryDate,
+    DateTime? exitDate,
+    int? status,
+    int? customerId,
+    String? customerName,
+    String? customerSurname,
+    String? email,
+    String? document,
+    String? whatsapp,
+    String? customerObservation,
+    int? vehicleId,
+    String? vehicleModel,
+    String? vehicleColor,
+    String? vehiclePlate,
+    String? vehicleType,
+    int? manufactureYear,
+    int? vehicleTypeId,
+    String? userName,
+    String? userEmail,
+    List<Observation>? observations,
+    List<PurchaseItem>? purchaseItems,
+    Uint8List? imageBytes,
+    Uint8List? exitImageBytes,
+    double? sumValue,
+  }) {
+    return ServiceDetails(
+      serviceId: serviceId ?? this.serviceId,
+      entryDate: entryDate ?? this.entryDate,
+      exitDate: exitDate ?? this.exitDate,
+      status: status ?? this.status,
+      customerId: customerId ?? this.customerId,
+      customerName: customerName ?? this.customerName,
+      customerSurname: customerSurname ?? this.customerSurname,
+      email: email ?? this.email,
+      document: document ?? this.document,
+      whatsapp: whatsapp ?? this.whatsapp,
+      customerObservation: customerObservation ?? this.customerObservation,
+      vehicleId: vehicleId ?? this.vehicleId,
+      vehicleModel: vehicleModel ?? this.vehicleModel,
+      vehicleColor: vehicleColor ?? this.vehicleColor,
+      vehiclePlate: vehiclePlate ?? this.vehiclePlate,
+      vehicleType: vehicleType ?? this.vehicleType,
+      manufactureYear: manufactureYear ?? this.manufactureYear,
+      vehicleTypeId: vehicleTypeId ?? this.vehicleTypeId,
+      userName: userName ?? this.userName,
+      userEmail: userEmail ?? this.userEmail,
+      observations: observations ?? this.observations,
+      purchaseItems: purchaseItems ?? this.purchaseItems,
+      imageBytes: imageBytes ?? this.imageBytes,
+      exitImageBytes: exitImageBytes ?? this.exitImageBytes,
+      sumValue: sumValue ?? this.sumValue,
+    );
+  }
+
+
+
+factory ServiceDetails.fromJson(Map<String, dynamic> json) {
     return ServiceDetails(
       serviceId: json['service_id'],
       entryDate: DateTime.parse(json['entry_date']),

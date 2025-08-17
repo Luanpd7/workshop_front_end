@@ -148,10 +148,12 @@ class ServiceState with ChangeNotifier {
       bool? details,
       ServiceDetails? serviceDetails}) async {
     loadVehicles();
-    print('entrou');
-    print('details $details');
+
     isDetails = details;
+
+
     if (serviceDetails != null) {
+
 
       fillFieldsFromServiceDetails(serviceDetails);
     }

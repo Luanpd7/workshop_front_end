@@ -794,7 +794,6 @@ class ButtonPdf extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<ServiceState>(context);
 
     return GestureDetector(
       onTap: () async {

@@ -64,10 +64,11 @@ class UseCaseService {
     String? name,
     String? document,
     String? plate,
-
-
   }) =>
       repository.getAllServices(idUser: idUser, name: name, status: status,document: document,plate: plate);
+
+  Future<Map<String, dynamic>?> getImageServiceById(int id) =>
+      repository.getImageServiceById(id);
 
   Future<bool> updateService(int serviceId, Map<String, dynamic> updates) =>
       repository.updateService(serviceId, updates);

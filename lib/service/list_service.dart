@@ -11,7 +11,7 @@ import '../repository/repository_service.dart';
 
 class ListServicesState with ChangeNotifier {
   ListServicesState() {
-    _init();
+     _init();
   }
 
   final TextEditingController nameController = TextEditingController();
@@ -28,7 +28,7 @@ class ListServicesState with ChangeNotifier {
     notifyListeners();
   }
 
-  String? _situationValue = 'todos';
+  String? _situationValue ;
 
 
   String? get situationValue => _situationValue;
@@ -36,6 +36,12 @@ class ListServicesState with ChangeNotifier {
   set situationValue(String? value) {
     _situationValue = value;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 
 
@@ -52,15 +58,22 @@ class ListServicesState with ChangeNotifier {
     }
   }
 
+  bool _disposed = false;
+
   Future<void> loadData() async {
     final repository = RepositoryService();
     final useCaseService = UseCaseService(repository);
     final id = UserContext().id == 1 ?  null :  UserContext().id ;
+
     var result = await useCaseService.getAllServices(idUser: id);
+
+    if (_disposed) return;
 
     listService
       ..clear()
       ..addAll(result);
+
+
 
     _loading = false;
     notifyListeners();
