@@ -21,9 +21,15 @@ abstract class IRepositoryService {
     String? document,
     String? plate,});
 
-  Future<bool> updateService(int serviceId, Map<String, dynamic> updates);
+  Future<bool> updateService(int serviceId, int newStatus,
+      {List<Map<String, dynamic>>? observations,
+        List<Map<String, dynamic>>? purchaseItems});
+
+  Future<bool> updateVehicle(int vehicleId, Map<String, dynamic> updates);
 
   Future<List<UserRanking>> getRankingUsers();
+
+  Future<List<User>> getAllMechanics();
 
 }
 
@@ -53,6 +59,51 @@ class RepositoryService implements IRepositoryService {
     } catch (e) {
       _logger.severe('Erro ao buscar veículos: $e');
       return [];
+    }
+  }
+
+  @override
+  Future<List<User>> getAllMechanics() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseURL/user/mechanics'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Erro ao buscar veículos');
+      }
+
+      final data = jsonDecode(response.body);
+      List<User> users = [];
+
+      for (var item in data) {
+        users.add(User.fromJson(item));
+      }
+
+      return users;
+    } catch (e) {
+      _logger.severe('Erro ao buscar veículos: $e');
+      return [];
+    }
+  }
+
+  Future<Service> getServiceById(int id) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseURL/service/getServiceById/$id'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Erro ao buscar serviço');
+      }
+
+      final data = jsonDecode(response.body);
+      return Service.fromJson(data);
+    } catch (e) {
+      print('Erro ao buscar serviço: $e');
+      rethrow;
     }
   }
 
@@ -154,34 +205,6 @@ class RepositoryService implements IRepositoryService {
   }
 
 
-  Future<Map<String, Uint8List>?> getImageServiceById(int id) async {
-    try {
-      final uri = Uri.parse('$baseURL/service/servicesImage')
-          .replace(queryParameters: {'id': id.toString()});
-
-      final response = await http.get(uri);
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = jsonDecode(response.body);
-
-        final imageBytes = base64Decode(data['image']);
-        final exitImageBytes = base64Decode(data['exit_image']);
-
-        return {
-          "image": imageBytes,
-          "exit_image": exitImageBytes,
-        };
-      } else if (response.statusCode == 404) {
-        return null;
-      } else {
-        throw Exception(
-            'Erro ao buscar imagem do serviço: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Erro ao buscar imagem do serviço: $e');
-      return null;
-    }
-  }
 
 
 
@@ -213,7 +236,8 @@ class RepositoryService implements IRepositoryService {
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
 
-        final services = data.map((e) => ServiceDetails.fromJson(e)).toList();
+
+        final services = data.map((e) => ServiceDetails.fromMap(e)).toList();
         return services;
       } else {
         throw Exception('Erro ao buscar serviços: ${response.statusCode}');
@@ -225,27 +249,41 @@ class RepositoryService implements IRepositoryService {
   }
 
   @override
-  Future<bool> updateService(int serviceId, Map<String, dynamic> updates) async {
+  Future<bool> updateService(int serviceId, int newStatus,
+      {List<Map<String, dynamic>>? observations,
+        List<Map<String, dynamic>>? purchaseItems}) async {
     try {
-
-      if (updates.containsKey('exitImageBytes') && updates['exitImageBytes'] is Uint8List) {
-        updates['exitImageBytes'] = base64Encode(updates['exitImageBytes']);
-      }
-      if (updates.containsKey('exitDate') && updates['exitDate'] is DateTime) {
-        updates['exitDate'] = (updates['exitDate'] as DateTime).toIso8601String();
-      }
-
       final response = await http.put(
         Uri.parse('$baseURL/service/update/$serviceId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'status': newStatus,
+          'observations': observations ?? [],
+          'purchaseItems': purchaseItems ?? [],
+        }),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      _logger.severe('Erro de conexão ao atualizar serviço: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> updateVehicle(int vehicleId, Map<String, dynamic> updates) async {
+    try {
+
+
+      final response = await http.put(
+        Uri.parse('$baseURL/service/updateVehicle/$vehicleId'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(updates),
       );
 
       if (response.statusCode == 200) {
-        _logger.info('Serviço $serviceId atualizado com sucesso.');
         return true;
       } else {
-        _logger.warning('Erro ao atualizar serviço $serviceId: ${response.body}');
         return false;
       }
     } catch (e) {

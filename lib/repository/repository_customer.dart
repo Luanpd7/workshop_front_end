@@ -101,7 +101,6 @@ class RepositoryCustomer implements IRepositoryCustomer {
         var customer = Customer.fromJson(i);
         list.add(customer);
       }
-
       return list;
     } catch (e) {
       _logger.severe('Erro ao listar clientes: $e');

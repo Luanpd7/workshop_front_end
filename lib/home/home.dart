@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_echarts/flutter_echarts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:workshop_front_end/customer/view.dart';
 import 'package:workshop_front_end/login/entities/login.dart';
 import 'package:workshop_front_end/login/view.dart';
 import '../domain/use_case_service.dart';
-import '../home_manager/home_manager_view.dart';
 import '../id_context.dart';
+import '../mechanic/mechanic_area.dart';
 import '../repository/repository_service.dart';
 import '../service/entities/service.dart';
+import '../service/list_service.dart';
 
 /// State da home
 class HomeState with ChangeNotifier {
@@ -19,7 +19,6 @@ class HomeState with ChangeNotifier {
   List<UserRanking> rankingUsers = [];
 
   bool loading = false;
-
 
   String get selectedPeriod => _selectedPeriod;
 
@@ -39,7 +38,8 @@ class HomeState with ChangeNotifier {
     final repository = RepositoryService();
     final useCaseService = UseCaseService(repository);
     final id = UserContext().id;
-    _services = await useCaseService.getAllServices(idUser: id == 1 ? null : id);
+    _services =
+        await useCaseService.getAllServices(idUser: id == 1 ? null : id);
     rankingUsers = await useCaseService.getRankingUsers();
 
     loading = false;
@@ -53,38 +53,51 @@ class HomeState with ChangeNotifier {
 
     for (final service in _services) {
       final date = service.entryDate;
-      if (_selectedPeriod == '7d' && date.isAfter(now.subtract(Duration(days: 6)))) {
-        final label = _formatWeekdayLabel(date);
-        result[label] = (result[label] ?? 0) + 1;
-      } else if (_selectedPeriod == '1m' && date.isAfter(DateTime(now.year, now.month - 1))) {
-        final label = 'Dia ${date.day}';
-        result[label] = (result[label] ?? 0) + 1;
-      } else if (_selectedPeriod == '1y' && date.isAfter(DateTime(now.year - 1))) {
-        final label = _monthName(date.month);
-        result[label] = (result[label] ?? 0) + 1;
+      if (date != null) {
+        if (_selectedPeriod == '7d' &&
+            date.isAfter(now.subtract(Duration(days: 6)))) {
+          final label = _formatWeekdayLabel(date);
+          result[label] = (result[label] ?? 0) + 1;
+        } else if (_selectedPeriod == '1m' &&
+            date.isAfter(DateTime(now.year, now.month - 1))) {
+          final label = 'Dia ${date.day}';
+          result[label] = (result[label] ?? 0) + 1;
+        } else if (_selectedPeriod == '1y' &&
+            date.isAfter(DateTime(now.year - 1))) {
+          final label = _monthName(date.month);
+          result[label] = (result[label] ?? 0) + 1;
+        }
       }
     }
 
     return result;
   }
 
-  List<int> get chartData {
+  List<int?>? get chartData {
     final grouped = _groupServicesByDate();
     return chartLabels.map((label) => grouped[label] ?? 0).toList();
   }
 
-  Icon? colorRanking(int index){
+  Icon? colorRanking(int index) {
     switch (index) {
       case 1:
-        return Icon(Icons.emoji_events , color: Colors.amber,);
+        return Icon(
+          Icons.emoji_events,
+          color: Colors.amber,
+        );
       case 2:
-        return Icon(Icons.emoji_events , color: Colors.grey,);
+        return Icon(
+          Icons.emoji_events,
+          color: Colors.grey,
+        );
       case 3:
-        return Icon(Icons.emoji_events , color: Colors.brown,);
-      default :
+        return Icon(
+          Icons.emoji_events,
+          color: Colors.brown,
+        );
+      default:
         return null;
     }
-
   }
 
   /// Label do gráfico
@@ -95,8 +108,18 @@ class HomeState with ChangeNotifier {
         return List.generate(30, (i) => 'Dia ${i + 1}');
       case '1y':
         return [
-          'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun',
-          'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'
+          'Jan',
+          'Fev',
+          'Mar',
+          'Abr',
+          'Mai',
+          'Jun',
+          'Jul',
+          'Ago',
+          'Set',
+          'Out',
+          'Nov',
+          'Dez'
         ];
       case '7d':
       default:
@@ -112,22 +135,37 @@ class HomeState with ChangeNotifier {
   }
 
   String _monthName(int month) {
-    const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const months = [
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Out',
+      'Nov',
+      'Dez'
+    ];
     return months[month - 1];
   }
 }
 
-
 /// TELA PRINCIPAL
 class Home extends StatelessWidget {
-   Home({this.isManager = false});
+  Home({this.isManager = false});
 
   bool? isManager;
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => HomeState(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => HomeState()),
+        ChangeNotifierProvider(create: (_) => ListServicesState()),
+      ],
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
@@ -138,8 +176,7 @@ class Home extends StatelessWidget {
         body: SingleChildScrollView(
           child: Column(
             children: [
-              isManager == false ?
-              _ItemsHome() : HomeManager()
+              isManager == true ? _ItemsHome() : MechanicArea(),
             ],
           ),
         ),
@@ -210,7 +247,7 @@ class _ItemsHome extends StatelessWidget {
                     name: 'Quantidade'
                   },
                   series: [{
-                    data: ${data},
+                    data: ${data ?? 0},
                     type: 'line',
                     areaStyle: {}
                   }]
@@ -220,30 +257,36 @@ class _ItemsHome extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 20),
-        _ItemHome(
-          label: 'Registro de serviço',
-          icon: Icons.add,
-          subtitle: 'Registrar cliente e serviço',
+        ItemHome(
+          label: 'Serviços',
+          icon: Icons.account_balance,
+          subtitle: 'Gerenciar serviços',
           onPressed: () {
-            var user = Provider.of<LoginState>(context, listen: false).user;
-            Provider.of<ServiceState>(context, listen: false);
-            context.push('/registerService');
+            context.push('/listService');
           },
         ),
-        _ItemHome(
-          label: 'Lista de clientes',
+        ItemHome(
+          label: 'Clientes',
           icon: Icons.supervised_user_circle,
-          subtitle: 'Visualizar clientes que já foram registrados',
+          subtitle: 'Gerenciar clientes',
           onPressed: () {
             context.push('/listCustomers');
           },
         ),
-        _ItemHome(
-          label: 'Lista de Serviços',
-          icon: Icons.account_balance,
-          subtitle: 'Visualizar serviços em andamento ou concluídos',
+        ItemHome(
+          label: 'Veículos',
+          icon: Icons.directions_car,
+          subtitle: 'Visualizar e gerenciar veículos',
           onPressed: () {
-            context.push('/listService');
+            context.push('/listVehicle');
+          },
+        ),
+        ItemHome(
+          label: 'Relatórios',
+          icon: Icons.account_balance,
+          subtitle: 'Visualizar e gerenciar relatórios',
+          onPressed: () {
+            context.push('');
           },
         ),
       ],
@@ -252,73 +295,94 @@ class _ItemsHome extends StatelessWidget {
 }
 
 /// Util da estrutura dos menus
-class _ItemHome extends StatelessWidget {
-  const _ItemHome({
+class ItemHome extends StatelessWidget {
+  const ItemHome({
     required this.label,
     required this.subtitle,
     required this.onPressed,
     required this.icon,
+    this.showFlagNewService,
   });
 
   final String label;
   final String subtitle;
   final IconData icon;
   final void Function() onPressed;
+  final bool? showFlagNewService;
 
   @override
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
-    return GestureDetector(
-      onTap: onPressed,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-        child: Container(
-          height: 100,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.all(
-              Radius.circular(15),
-            ),
-            gradient: LinearGradient(
-              colors: [
-                Colors.blueAccent,
-                Colors.grey.withAlpha(50),
-              ],
-            ),
-          ),
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: onPressed,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18.0),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+            child: Container(
+              height: 100,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.all(
+                  Radius.circular(15),
+                ),
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.blueAccent,
+                    Colors.grey.withAlpha(50),
+                  ],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        label,
-                        style: Theme.of(context).textTheme.headlineMedium,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            label,
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          Icon(
+                            icon,
+                            size: 30,
+                          ),
+                        ],
                       ),
-                      Icon(
-                        icon,
-                        size: 30,
+                      Text(
+                        subtitle,
+                        style: theme.textTheme.labelSmall!
+                            .copyWith(color: theme.disabledColor),
                       ),
                     ],
                   ),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.labelSmall!
-                        .copyWith(color: theme.disabledColor),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
         ),
-      ),
+        if (showFlagNewService ?? false) ...[
+          Positioned(
+            right: 37,
+            top: 23,
+            child: Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12), color: Colors.red),
+              child: const Center(
+                child: Text('2'),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -341,9 +405,10 @@ class _Drawer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('${user.name}',
+                Text('${user?.name ?? ''}',
                     style: TextStyle(color: Colors.white, fontSize: 18)),
-                Text('${user.email}', style: TextStyle(color: Colors.white70)),
+                Text('${user?.email ?? ''}',
+                    style: TextStyle(color: Colors.white70)),
               ],
             ),
           ),
@@ -353,6 +418,11 @@ class _Drawer extends StatelessWidget {
             onTap: () {
               Navigator.pop(context);
             },
+          ),
+          ListTile(
+            leading: Icon(Icons.person),
+            title: Text("Adicionar novo mecânico"),
+            onTap: () {},
           ),
           ListTile(
             leading: Icon(Icons.settings),

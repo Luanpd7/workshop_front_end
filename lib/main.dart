@@ -4,8 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:workshop_front_end/repository/api_config.dart';
 import 'package:workshop_front_end/router/router.dart';
 import 'package:http/http.dart' as http;
+import 'package:workshop_front_end/service/service_form.dart';
 import 'package:workshop_front_end/setting/view.dart';
-import 'customer/view.dart';
+import 'customer/custom_view.dart';
 import 'login/view.dart';
 
 final Logger _logger = Logger('RepositoryCustomer');
@@ -48,9 +49,6 @@ void main() async {
         ),
         ChangeNotifierProvider<SettingsState>(
           create: (context) => SettingsState(),
-        ),
-        ChangeNotifierProvider<ServiceState>(
-          create: (context) => ServiceState(isDetails: false),
         ),
       ],
       child: const MyApp(),

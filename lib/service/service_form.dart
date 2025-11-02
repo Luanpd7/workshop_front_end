@@ -1,23 +1,253 @@
+
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:pdf/pdf.dart';
 import 'package:provider/provider.dart';
-import '../customer/view.dart';
+import '../domain/use_case_customer.dart';
+import '../domain/use_case_service.dart';
+import '../domain/use_case_vehicle.dart';
+import '../login/entities/login.dart';
+import '../login/view.dart';
+import '../repository/repository_customer.dart';
 import '../repository/repository_service.dart';
-import 'entities/service'
-    '.dart';
+import '../repository/repository_vehicle.dart';
+import 'entities/service.dart';
 import 'entities/vehicle.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
-
 
 /// Tela responsável pelo formulario de serviço,
 /// usado na tela segunda tab quando vou cadastrar
 /// um serviço e na quando vou editar um serviço
+
+class ServiceState with ChangeNotifier {
+  ServiceState() {
+    _init();
+  }
+
+  bool _loading = false;
+
+  final RepositoryService _repository = RepositoryService();
+
+  List<Vehicle> _vehicles = [];
+
+  List<User> _users = [];
+
+  Vehicle? _selectedVehicle;
+
+  User? _selectedUser;
+
+
+  List<File> imageFiles = [];
+  List<Uint8List> imageBytesList = [];
+
+
+  List<File> audioFiles = [];
+
+
+
+  List<Observation> observations = [];
+
+  List<PurchaseItem> purchasePart = [];
+
+  final formKey = GlobalKey<FormState>();
+
+  bool _isDetails = false;
+
+  bool _isEdit = false;
+
+  double? _sumValue;
+
+  /// controller of service form
+  TextEditingController observationServiceController = TextEditingController();
+  TextEditingController partController = TextEditingController();
+  TextEditingController markController = TextEditingController();
+  TextEditingController priceUnitaryController = TextEditingController();
+  TextEditingController quantityPartController = TextEditingController();
+
+  get loading => _loading;
+
+  double? get sumValue => _sumValue;
+
+  get isDetails => _isDetails;
+
+  get isEdit => _isEdit;
+
+
+  List<Vehicle> get vehicles => _vehicles;
+
+  List<User> get users => _users;
+
+  Vehicle? get selectedVehicle => _selectedVehicle;
+
+  User? get selectedUser => _selectedUser;
+
+  set loading(value) {
+    _loading = value;
+    notifyListeners();
+  }
+
+  set sumValue(double? value) {
+    _sumValue = value;
+    notifyListeners();
+  }
+
+  set selectVehicle(Vehicle? vehicle) {
+    _selectedVehicle = vehicle;
+    notifyListeners();
+  }
+
+  set selectUser(User? user) {
+    _selectedUser = user;
+    notifyListeners();
+  }
+
+  set isDetails(value) {
+    _isDetails = value;
+    notifyListeners();
+  }
+
+  set isEdit(value) {
+    _isEdit = value;
+    notifyListeners();
+  }
+
+  Future<void> _init() async {
+    await loadData();
+    notifyListeners();
+  }
+
+  Future<void> loadData() async {
+    loading = true;
+    await getAllVehicles();
+    await getAllMechanics();
+    loading = false;
+  }
+
+  Future<void> getAllMechanics() async {
+    final repositoryService = RepositoryService();
+    final useCaseService = UseCaseService(repositoryService);
+
+    var result = await useCaseService.getAllMechanics();
+
+    users
+      ..clear()
+      ..addAll(result);
+  }
+
+  Future<void> getAllVehicles() async {
+    final repository = RepositoryVehicle();
+    final useCase = UseCaseVehicle(repository);
+
+    var result = await useCase.getAllVehicles();
+
+    vehicles
+      ..clear()
+      ..addAll(result);
+  }
+
+
+  Future<bool?> _saveForm(BuildContext context, {bool? isEdit = false}) async {
+    var user = Provider.of<LoginState>(context, listen: false).user;
+    try {
+
+
+      final repositoryService = RepositoryService();
+      final useCaseService = UseCaseService(repositoryService);
+
+
+
+
+      final service = Service(vehicleId: selectedVehicle!.id!, status: 3, entryDate: DateTime.now(), idUser: selectedUser!.id!);
+      final success = await useCaseService.initializeService(
+        service: service,
+      );
+
+      return success;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  void addImageFile(File file) {
+    imageFiles.add(file);
+    notifyListeners();
+  }
+
+  void addImageBytes(Uint8List bytes) {
+    imageBytesList.add(bytes);
+    notifyListeners();
+  }
+
+  void removeImageFile(File file) {
+    imageFiles.remove(file);
+    notifyListeners();
+  }
+
+  void removeImageBytes(Uint8List bytes) {
+    imageBytesList.remove(bytes);
+    notifyListeners();
+  }
+
+  void addAudioFile(File file) {
+    audioFiles.add(file);
+    notifyListeners();
+  }
+
+  void removeAudioFile(File file) {
+    audioFiles.remove(file);
+    notifyListeners();
+  }
+
+  void clearAudios() {
+    audioFiles.clear();
+    notifyListeners();
+  }
+
+  Future<bool> onPressedDeleteCustomer({required int id}) async {
+    final repository = RepositoryCustomer();
+    final useCaseCustomer = UseCaseCustomer(repository);
+
+    final result = await useCaseCustomer.deleteCustomer(id);
+
+    return result;
+  }
+
+  /// adicionar uma observação na listagem
+  void addObservation(Observation service) {
+    observations.add(service);
+    observationServiceController.clear();
+    notifyListeners();
+  }
+
+  /// adicionar uma itens de compra na listagem
+  void addPurchasePart(PurchaseItem service) {
+    purchasePart.add(service);
+    partController.clear();
+    markController.clear();
+    priceUnitaryController.clear();
+    quantityPartController.clear();
+    sumValue = 0.0;
+    notifyListeners();
+  }
+
+  /// Somar o total, tendo a unidade e a quantidade
+  void sumTotal() {
+    if (quantityPartController.text.isNotEmpty &&
+        priceUnitaryController.text.isNotEmpty) {
+      var quantity = int.tryParse(quantityPartController.text) ?? 0;
+
+      var priceUnitary = double.tryParse(priceUnitaryController.text) ?? 0.0;
+      sumValue = priceUnitary * quantity;
+      notifyListeners();
+    }
+  }
+
+  /// Selecionar uma foto da galeria ou abri a camera
+
+}
 
 class RegisterService extends StatelessWidget {
   const RegisterService({super.key, this.service, this.isDetails = false});
@@ -28,40 +258,38 @@ class RegisterService extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Iniciar um serviço"),
+        backgroundColor: Colors.blue.shade700,
+      ),
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(18.0),
-          child: Consumer<ServiceState>(
-            builder: (context, state, Widget? _) {
-              if (state.loading) {
-                return Center(child: CircularProgressIndicator());
-              }
-              return Form(
-                child: Column(
-                  children: [
-                    if (state.isDetails) ...[
-                      FinalizeButton(
-                        serviceId: service?.serviceId ?? 0,
-                      ),
-                      SizedBox(
-                        height: 10,
-                      ),
-                      _ButtonEdit(),
-                    ] else
-                      if(state.isEdit)_ButtonSaveEdit(service!.serviceId)
-                      else _ButtonSave(),
-                    _InfoCardService(),
-                    _InfoPurchase(),
-                    _InfoCardObservation(),
-                    if (!state.isDetails)
-                      _InfoPhoto(
-                        onUploadPressed: () => state.selectPhoto(context),
-                      ),
-                  ],
-                ),
-              );
-            },
+          child: ChangeNotifierProvider(
+            create: (context) => ServiceState(),
+            child: Consumer<ServiceState>(
+              builder: (context, state, Widget? _) {
+                if (state.loading) {
+                  return Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+                return Form(
+                  child: Column(
+                    children: [
+                      _ButtonSave(),
+                      _InfoCardVehicle(),
+                      _InfoCardMechanic(),
+
+                      if (!state.isDetails && !state.isEdit)
+                        _InfoPhoto(
+                        )
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -70,8 +298,8 @@ class RegisterService extends StatelessWidget {
 }
 
 /// card para a informações do serviço
-class _InfoCardService extends StatelessWidget {
-  const _InfoCardService();
+class _InfoCardVehicle extends StatelessWidget {
+  const _InfoCardVehicle();
 
   @override
   Widget build(BuildContext context) {
@@ -81,11 +309,11 @@ class _InfoCardService extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(
-            vertical: 10,
+          padding: const EdgeInsets.only(
+            top: 10,
           ),
           child: Text(
-            'Informações do veículo',
+            'Veículo',
             style: theme.textTheme.titleLarge,
           ),
         ),
@@ -96,73 +324,97 @@ class _InfoCardService extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (state.isDetails) ...[
-                  _TextField(
-                    header: 'Veículo',
-                    isRequired: true,
-                    controller: TextEditingController(
-                        text: state.selectedVehicle?.name ?? ''),
-                    maxLength: 25,
-                    enabled: false,
-                  ),
-                ] else
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: DropdownButtonFormField(
-                      value: state.selectedVehicle,
-                      dropdownColor: Theme.of(context).scaffoldBackgroundColor,
-                      decoration: InputDecoration(
-                        label: Text(
-                          'Veículo',
-                          style: theme.textTheme.labelSmall!
-                              .copyWith(color: theme.disabledColor),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide:
-                              BorderSide(color: Colors.blue.shade700, width: 1),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                      ),
-                      items: state.isDetails == true
-                          ? []
-                          : state.vehicles.map(
-                              (vehicle) {
-                                return DropdownMenuItem<VehicleType>(
-                                  value: vehicle,
-                                  child: Text(vehicle.name),
-                                );
-                              },
-                            ).toList(),
-                      onChanged: (selected) {
-                        state.selectVehicle = selected as VehicleType;
-                      },
+                DropdownButtonFormField(
+                  value: state.selectedVehicle,
+                  dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                  decoration: InputDecoration(
+                    label: Text(
+                      'Selecionar veículo',
+                      style: theme.textTheme.labelSmall!
+                          .copyWith(color: theme.disabledColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: Colors.blue.shade700, width: 1),
+                      borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                _TextField(
-                  header: 'Modelo',
-                  isRequired: true,
-                  controller: state.brandController,
-                  maxLength: 25,
-                  enabled: !state.isDetails,
+                  items: state.vehicles.map(
+                    (vehicle) {
+                      return DropdownMenuItem<Vehicle>(
+                        value: vehicle,
+                        child:
+                            Text('${vehicle.plate} - ${vehicle.model ?? ''}'),
+                      );
+                    },
+                  ).toList(),
+                  onChanged: (selected) {
+                    state.selectVehicle = selected;
+                  },
                 ),
-                _TextField(
-                  textInputType: TextInputType.number,
-                  header: 'Ano de fabricação',
-                  controller: state.yearFabricationController,
-                  validator: validator,
-                  enabled: !state.isDetails,
-                ),
-                _TextField(
-                  header: 'Cor',
-                  controller: state.colorController,
-                  validator: validator,
-                  enabled: !state.isDetails,
-                ),
-                _TextField(
-                  header: 'Placa',
-                  controller: state.plateController,
-                  maxLength: 10,
-                  enabled: !state.isDetails,
+              ],
+            ),
+          ),
+        )
+      ],
+    );
+  }
+}
+
+/// card para a informações do serviço
+class _InfoCardMechanic extends StatelessWidget {
+  const _InfoCardMechanic();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final state = Provider.of<ServiceState>(context, listen: true);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(
+            top: 10,
+          ),
+          child: Text(
+            'Mecânico',
+            style: theme.textTheme.titleLarge,
+          ),
+        ),
+        SizedBox(
+          width: double.infinity,
+          child: Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DropdownButtonFormField(
+                  value: state.selectedUser,
+                  dropdownColor: Theme.of(context).scaffoldBackgroundColor,
+                  decoration: InputDecoration(
+                    label: Text(
+                      'Selecionar mecânico',
+                      style: theme.textTheme.labelSmall!
+                          .copyWith(color: theme.disabledColor),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: Colors.blue.shade700, width: 1),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  items: state.users.map(
+                        (user) {
+                      return DropdownMenuItem<User>(
+                        value: user,
+                        child:
+                        Text('${user.id} - ${user.name}'),
+                      );
+                    },
+                  ).toList(),
+                  onChanged: (selected) {
+                    state.selectUser = selected;
+                  },
                 ),
               ],
             ),
@@ -318,13 +570,58 @@ class _InfoCardObservation extends StatelessWidget {
 }
 
 class _InfoPhoto extends StatelessWidget {
-  final VoidCallback onUploadPressed;
+  const _InfoPhoto();
 
-  const _InfoPhoto({required this.onUploadPressed});
+  Future<void> _pickImage(BuildContext context, ImageSource source) async {
+    final state = Provider.of<ServiceState>(context, listen: false);
+    final picker = ImagePicker();
+
+    if (source == ImageSource.camera) {
+      final XFile? photo = await picker.pickImage(source: ImageSource.camera);
+      if (photo != null) {
+        state.addImageFile(File(photo.path));
+      }
+    } else {
+      final List<XFile> photos = await picker.pickMultiImage();
+      for (final photo in photos) {
+        state.addImageFile(File(photo.path));
+      }
+    }
+  }
+
+  void _showPickerMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Câmera'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(context, ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Galeria'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage(context, ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<ServiceState>(context, listen: true);
+    final state = Provider.of<ServiceState>(context);
     final theme = Theme.of(context);
 
     return Column(
@@ -333,28 +630,53 @@ class _InfoPhoto extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 25),
           child: Text(
-            'Foto do veículo atualmente',
+            'Fotos iniciais',
             style: theme.textTheme.titleLarge,
           ),
         ),
+        if (state.imageFiles.isNotEmpty || state.imageBytesList.isNotEmpty)
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: state.imageFiles.length + state.imageBytesList.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+            ),
+            itemBuilder: (context, index) {
+              Widget imageWidget;
+              VoidCallback? onDelete;
 
-        // 1º caso: imagem nova do dispositivo
-        if (state.imageFile != null)
-          _buildImageWidget(
-            context,
-            Image.file(state.imageFile!, height: 200, fit: BoxFit.cover),
-            onDelete: () => state.imageFile = null,
+              if (index < state.imageFiles.length) {
+                final file = state.imageFiles[index];
+                imageWidget = Image.file(file, fit: BoxFit.cover);
+                onDelete = () => state.removeImageFile(file);
+              } else {
+                final bytes = state.imageBytesList[index - state.imageFiles.length];
+                imageWidget = Image.memory(bytes, fit: BoxFit.cover);
+                onDelete = () => state.removeImageBytes(bytes);
+              }
+
+              return Stack(
+                children: [
+                  Positioned.fill(child: imageWidget),
+                  Positioned(
+                    top: 5,
+                    right: 5,
+                    child: GestureDetector(
+                      onTap: onDelete,
+                      child: const CircleAvatar(
+                        backgroundColor: Colors.red,
+                        radius: 15,
+                        child: Icon(Icons.close, color: Colors.white, size: 18),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           )
-
-        // 2º caso: imagem já salva no banco
-        else if (state.imageBytes != null)
-          _buildImageWidget(
-            context,
-            Image.memory(state.imageBytes!, height: 200, fit: BoxFit.cover),
-            onDelete: () => state.imageBytes = null,
-          )
-
-        // 3º caso: nenhuma imagem
         else
           Align(
             alignment: Alignment.center,
@@ -364,10 +686,9 @@ class _InfoPhoto extends StatelessWidget {
                 padding: const EdgeInsets.all(15.0),
                 child: ElevatedButton.icon(
                   style: ButtonStyle(
-                    backgroundColor:
-                    WidgetStatePropertyAll(Colors.blue.shade700),
+                    backgroundColor: WidgetStatePropertyAll(Colors.blue.shade700),
                   ),
-                  onPressed: onUploadPressed,
+                  onPressed: () => _showPickerMenu(context),
                   icon: const Icon(Icons.camera_alt_outlined),
                   label: const Text('Anexar ou tirar foto'),
                 ),
@@ -377,36 +698,16 @@ class _InfoPhoto extends StatelessWidget {
       ],
     );
   }
-
-  Widget _buildImageWidget(BuildContext context, Widget imageWidget, {VoidCallback? onDelete}) {
-    return Align(
-      alignment: Alignment.center,
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 20, bottom: 20),
-            child: imageWidget,
-          ),
-          if (onDelete != null)
-            GestureDetector(
-              onTap: onDelete,
-              child: const Icon(
-                Icons.delete,
-                color: Colors.redAccent,
-                size: 30,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 }
 
 
 
+
+
+
 /// Util para campo de texto
-class _TextField extends StatelessWidget {
-  const _TextField({
+class DefaultTextField extends StatelessWidget {
+  const DefaultTextField({
     required this.header,
     required this.controller,
     this.isRequired = false,
@@ -490,7 +791,7 @@ class _ButtonSave extends StatelessWidget {
     return GestureDetector(
       onTap: () async {
         if (state.formKey.currentState?.validate() ?? true) {
-          final result = await state.saveForm(context);
+          final result = await state._saveForm(context);
           if (result == true) {
             Fluttertoast.showToast(
               msg: "Cadastrado com sucesso!",
@@ -509,25 +810,22 @@ class _ButtonSave extends StatelessWidget {
           }
         }
       },
-      child: SizedBox(
+      child: Container(
         height: 50,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.blue.shade700,
-            borderRadius: BorderRadius.circular(
-              12,
-            ),
-            border: Border.all(color: Colors.blue.shade700, width: 1),
+        decoration: BoxDecoration(
+          color: Colors.blue.shade700,
+          borderRadius: BorderRadius.circular(
+            12,
           ),
-          child: Center(
-            child: Text('Salvar'),
-          ),
+          border: Border.all(color: Colors.blue.shade700, width: 1),
+        ),
+        child: Center(
+          child: Text('Salvar'),
         ),
       ),
     );
   }
 }
-
 
 /// Botão para salvar serviço
 class _ButtonEdit extends StatelessWidget {
@@ -561,22 +859,37 @@ class _ButtonEdit extends StatelessWidget {
 
 /// Botão para salvar serviço
 class _ButtonSaveEdit extends StatelessWidget {
+  _ButtonSaveEdit(this.vehicleId);
 
-  _ButtonSaveEdit(this.serviceId);
-  final int serviceId;
+  final int vehicleId;
+
   @override
   Widget build(BuildContext context) {
     final state = Provider.of<ServiceState>(context);
 
     return GestureDetector(
       onTap: () async {
-        final updates = {
-        'model' : 'Cruze',
-        };
-
         final repo = RepositoryService();
 
-        final success = await repo.updateService(serviceId, updates);
+        final success = true;
+        //await repo.updateVehicle(vehicleId, updates);
+
+        if (success == true) {
+          Fluttertoast.showToast(
+            msg: "Editado com sucesso!",
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+          );
+          if (context.mounted) {
+            Navigator.pop(context);
+          }
+        } else if (success == false) {
+          Fluttertoast.showToast(
+            msg: "Erro ao editar!",
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+          );
+        }
       },
       child: SizedBox(
         height: 50,
@@ -590,228 +903,6 @@ class _ButtonSaveEdit extends StatelessWidget {
           ),
           child: Center(
             child: Text('Salvar Alterações'),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class ButtonPdf extends StatelessWidget {
-  ButtonPdf(this.serviceDetails);
-  final ServiceDetails serviceDetails;
-
-  Future<void> _generatePdf(BuildContext context) async {
-    final pdf = pw.Document();
-
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text("Detalhes do Serviço  #${serviceDetails.serviceId}",
-                  style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 16),
-              pw.Text("Dados do cliente",
-                  style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-
-
-              pw.SizedBox(height: 10),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text("Nome: ${serviceDetails.customerName}"),
-                  pw.Text("Documento: ${serviceDetails.document}"),
-                ],
-              ),
-              pw.SizedBox(height: 5),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text("E-mail: ${serviceDetails.email}"),
-                  pw.Text("Whatsapp: ${serviceDetails.whatsapp}"),
-                ],
-              ),
-              pw.SizedBox(height: 5),
-              pw.Text("Observação: ${serviceDetails.customerObservation}"),
-              pw.SizedBox(height: 16),
-
-              pw.Text("Dados do veículo",
-                  style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-
-
-              pw.SizedBox(height: 10),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text("Modelo: ${serviceDetails.vehicleModel}"),
-                  pw.Text("Cor: ${serviceDetails.vehicleColor}"),
-                ],
-              ),
-              pw.SizedBox(height: 5),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text("Placa: ${serviceDetails.vehiclePlate}"),
-                  pw.Text("Ano: ${serviceDetails.manufactureYear}"),
-                ],
-              ),
-              pw.SizedBox(height: 5),
-              pw.Text("Tipo de veículo: ${serviceDetails.vehicleType}"),
-              pw.SizedBox(height: 16),
-
-
-              pw.Text("Dados do mecânico",
-                  style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-
-              pw.SizedBox(height: 5),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text("Nome: ${serviceDetails.userName}"),
-                  pw.Text("E-mail: ${serviceDetails.userEmail}"),
-                ],
-              ),
-              pw.SizedBox(height: 16),
-
-              pw.Text("Dados do serviço",
-                  style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-
-              pw.SizedBox(height: 5),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text("Data de entrada: ${DateFormat('dd/MM/yyyy').format(serviceDetails.entryDate)}"),
-                  pw.Text("Data de saída: ${DateFormat('dd/MM/yyyy').format(serviceDetails.exitDate!)}"),
-                ],
-              ),
-
-              if (serviceDetails.purchaseItems.isNotEmpty) ...[
-                pw.SizedBox(height: 16),
-                pw.Text(
-                  "Itens da Compra",
-                  style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
-                ),
-                pw.SizedBox(height: 10),
-                pw.Table.fromTextArray(
-                  headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  headerDecoration: pw.BoxDecoration(color: PdfColors.grey300),
-                  cellAlignment: pw.Alignment.centerLeft,
-                  headers: ['Peça', 'Marca', 'Quantidade', 'Preço Unit.', 'Total'],
-                  data: serviceDetails.purchaseItems.map((item) {
-                    final precoUnit = item.unitPrice?.toStringAsFixed(2);
-                    final total = (item.unitPrice! * item.quantity!.toDouble()).toStringAsFixed(2);
-                    return [
-                      item.part,
-                      item.brand,
-                      item.quantity.toString(),
-                      "R\$ $precoUnit",
-                      "R\$ $total",
-                    ];
-                  }).toList(),
-                ),
-                pw.SizedBox(height: 16),
-              ],
-              if (serviceDetails.observations.isNotEmpty) ...[
-                pw.SizedBox(height: 16),
-                pw.Text(
-                  "Observações do serviço",
-                  style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
-                ),
-                pw.SizedBox(height: 10),
-                pw.Table.fromTextArray(
-                  headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                  headerDecoration: pw.BoxDecoration(color: PdfColors.grey300),
-                  cellAlignment: pw.Alignment.centerLeft,
-                  headers: ['Descrição', 'Data'],
-                  data: serviceDetails.observations.map((item) {
-                    return [
-                      item.description,
-                      DateFormat('dd/MM/yyyy  HH:mm')
-                          .format(item.date!)
-
-                    ];
-                  }).toList(),
-                ),
-                pw.SizedBox(height: 16),
-              ],
-
-
-
-
-              pw.SizedBox(height: 5),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text("Valor final:  R\$ ${serviceDetails.sumValue?.toStringAsFixed(2)}"),
-                ],
-              ),
-              pw.SizedBox(height: 16),
-            ],
-          );
-        },
-      ),
-    );
-
-    pdf.addPage(
-      pw.Page(
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
-            children: [
-              if (serviceDetails.imageBytes != null && serviceDetails.imageBytes!.isNotEmpty) ...[
-                pw.Text("Antes", style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 10),
-                pw.Image(
-                  pw.MemoryImage(serviceDetails.imageBytes!),
-                  width: 400,
-                  height: 300,
-                  fit: pw.BoxFit.cover,
-                ),
-                pw.SizedBox(height: 20),
-              ],
-              if (serviceDetails.exitImageBytes != null && serviceDetails.exitImageBytes!.isNotEmpty) ...[
-                pw.Text("Depois", style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
-                pw.SizedBox(height: 10),
-                pw.Image(
-                  pw.MemoryImage(serviceDetails.exitImageBytes!),
-                  width: 400,
-                  height: 300,
-                  fit: pw.BoxFit.cover,
-                ),
-              ],
-            ],
-          );
-        },
-      ),
-    );
-
-    await Printing.layoutPdf(
-      onLayout: (PdfPageFormat format) async => pdf.save(),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-
-    return GestureDetector(
-      onTap: () async {
-        await _generatePdf(context);
-      },
-      child: SizedBox(
-        height: 50,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.blue.shade700,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.blue.shade700, width: 1),
-          ),
-          child: const Center(
-            child: Text(
-              'Gerar PDF',
-              style: TextStyle(color: Colors.white),
-            ),
           ),
         ),
       ),
@@ -837,13 +928,13 @@ void showVehicleModal(BuildContext context) {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _TextField(
+                DefaultTextField(
                   header: 'Peça',
                   isRequired: true,
                   controller: state.partController,
                   maxLength: 15,
                 ),
-                _TextField(
+                DefaultTextField(
                   header: 'Marca',
                   isRequired: true,
                   controller: state.markController,
@@ -852,7 +943,7 @@ void showVehicleModal(BuildContext context) {
                 Row(
                   children: [
                     Expanded(
-                      child: _TextField(
+                      child: DefaultTextField(
                         header: 'Preço uni.',
                         isRequired: true,
                         controller: state.priceUnitaryController,
@@ -864,7 +955,7 @@ void showVehicleModal(BuildContext context) {
                       width: 8,
                     ),
                     Expanded(
-                      child: _TextField(
+                      child: DefaultTextField(
                         header: 'Qtd.',
                         isRequired: true,
                         controller: state.quantityPartController,
@@ -918,7 +1009,7 @@ void showVehicleModal(BuildContext context) {
                   part: state.partController.text,
                   quantity: quantity,
                   totalPrice: priceTotal,
-                  brand: state.markController.text,
+                  brand: state.markController.text, serviceId: 0,
                 );
 
                 state.addPurchasePart(purchasePart);
@@ -951,7 +1042,7 @@ void showObservationModal(BuildContext context) {
             children: [
               SizedBox(
                 height: 200,
-                child: _TextField(
+                child: DefaultTextField(
                   bigField: true,
                   header: 'Observação',
                   isRequired: false,
@@ -983,6 +1074,7 @@ void showObservationModal(BuildContext context) {
               var observations = Observation(
                 description: state.observationServiceController.text,
                 date: DateTime.now(),
+                serviceId: 0
               );
 
               state.addObservation(observations);
@@ -1168,134 +1260,3 @@ String? validator(String? value) {
   return null;
 }
 
-class FinalizeButton extends StatelessWidget {
-  final int serviceId;
-
-  const FinalizeButton({super.key, required this.serviceId});
-
-  Future<Uint8List?> _chooseImageSource(BuildContext context) async {
-    final picker = ImagePicker();
-
-    return showModalBottomSheet<Uint8List?>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera),
-              title: const Text('Usar câmera'),
-              onTap: () async {
-                final picked =
-                    await picker.pickImage(source: ImageSource.camera);
-                Navigator.pop(
-                    ctx, picked != null ? await picked.readAsBytes() : null);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Escolher da galeria'),
-              onTap: () async {
-                final picked =
-                    await picker.pickImage(source: ImageSource.gallery);
-    if(context.mounted) {
-      Navigator.pop(
-          ctx, picked != null ? await picked.readAsBytes() : null,);
-    }
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final state = context.read<ServiceState>(); // Aqui você pega o state
-
-    return GestureDetector(
-      onTap: () async {
-        final confirm = await showDialog<bool>(
-          context: context,
-          builder: (ctx) {
-            return AlertDialog(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              title: const Text('Finalizar serviço'),
-              content: const Text('Deseja finalizar este serviço?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(false),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Colors.blueAccent)),
-                  onPressed: () => Navigator.of(ctx).pop(true),
-                  child: const Text('Confirmar'),
-                ),
-              ],
-            );
-          },
-        );
-
-        if (confirm != true) return;
-
-
-        final imageBytes = await _chooseImageSource(context);
-        if (imageBytes == null) {
-          if(context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Nenhuma imagem selecionada.',),
-                backgroundColor: Colors.red,),
-            );
-          }
-          state.loading = false;
-          return;
-        }
-
-        var sumValue = 0.0;
-
-        for (var e in state.purchasePart) {
-          sumValue += e.totalPrice!.toDouble() ;
-        }
-
-        final updates = {
-          'exitImageBytes': imageBytes,
-          'exitDate': DateTime.now(),
-          'status': 1,
-          'sumValue' :sumValue,
-        };
-
-        final repo = RepositoryService();
-
-        final success = await repo.updateService(serviceId, updates);
-        state.loading = false;
-
-        if (success && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Serviço finalizado com sucesso.'), backgroundColor: Colors.green),
-          );
-
-         context.pop();
-
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Erro ao finalizar o serviço.'), backgroundColor: Colors.red),
-          );
-        }
-      },
-      child: SizedBox(
-        height: 50,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.red.shade700,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.red.shade700, width: 1),
-          ),
-          child: const Center(
-            child: Text('Finalizar', style: TextStyle(color: Colors.white)),
-          ),
-        ),
-      ),
-    );
-  }
-}

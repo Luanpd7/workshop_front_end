@@ -4,15 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:workshop_front_end/service/entities/service.dart';
-import 'package:workshop_front_end/service/service_details.dart';
 import '../domain/use_case_service.dart';
 import '../id_context.dart';
 import '../repository/repository_service.dart';
 
 class ListServicesState with ChangeNotifier {
-  ListServicesState() {
+  ListServicesState({this.screenToAnalyse}) {
      _init();
   }
+
+  final bool? screenToAnalyse;
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController documentController = TextEditingController();
@@ -20,35 +21,27 @@ class ListServicesState with ChangeNotifier {
 
    String? _situationSelected;
 
+  final listService = <dynamic>[];
 
+  bool _loading = false;
+
+  String? _situationValue ;
   String? get situationSelected => _situationSelected;
+
+  String? get situationValue => _situationValue;
+
+  get loading => _loading;
 
   set situationSelected(String? value) {
     _situationSelected = value;
     notifyListeners();
   }
 
-  String? _situationValue ;
-
-
-  String? get situationValue => _situationValue;
-
   set situationValue(String? value) {
     _situationValue = value;
     notifyListeners();
   }
 
-  @override
-  void dispose() {
-    _disposed = true;
-    super.dispose();
-  }
-
-
-  final listService = <dynamic>[];
-  bool _loading = true;
-
-  get loading => _loading;
 
   Future<void> _init() async {
     try {
@@ -61,6 +54,8 @@ class ListServicesState with ChangeNotifier {
   bool _disposed = false;
 
   Future<void> loadData() async {
+    _loading = true;
+    notifyListeners();
     final repository = RepositoryService();
     final useCaseService = UseCaseService(repository);
     final id = UserContext().id == 1 ?  null :  UserContext().id ;
@@ -69,10 +64,15 @@ class ListServicesState with ChangeNotifier {
 
     if (_disposed) return;
 
-    listService
-      ..clear()
-      ..addAll(result);
-
+    if(screenToAnalyse != null){
+      listService
+        ..clear()
+        ..addAll(result.where((e) => screenToAnalyse == true ? e.status == 3  :  e.status != 3  ));
+    }  else{
+      listService
+        ..clear()
+        ..addAll(result);
+    }
 
 
     _loading = false;
@@ -82,7 +82,6 @@ class ListServicesState with ChangeNotifier {
 
   void changedSituation(String? situation){
     if(situation == 'andamento' ){
-      situationValue = '0';
       situationValue = '0';
     }
     else if(situation == 'finalizado' ){
@@ -125,11 +124,11 @@ final id = UserContext().id == 1 ?  null :  UserContext().id ;
 
 /// Tela da listagem de serviços
 class ListService extends StatelessWidget {
-  const ListService({super.key, this.selectedService = false, this.idUser});
+  const ListService({super.key,  this.idUser, this.screenToAnalyse});
 
-  final bool selectedService;
 
   final int? idUser;
+  final bool? screenToAnalyse;
 
   @override
   Widget build(BuildContext context) {
@@ -144,9 +143,14 @@ class ListService extends StatelessWidget {
             _FilterButton(),
           ],
         ),
-        body: Padding(
-          padding: const EdgeInsets.only(top: 10),
-          child: ListViewItems(selectedService: selectedService),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(18.0),
+              child: _AddServiceButton(),
+            ),
+            ListViewItems(),
+          ],
         ),
       ),
     );
@@ -155,9 +159,8 @@ class ListService extends StatelessWidget {
 
 
 class ListViewItems extends StatelessWidget {
-  const ListViewItems({super.key, required this.selectedService});
+  const ListViewItems({super.key,});
 
-  final bool selectedService;
 
   @override
   Widget build(BuildContext context) {
@@ -171,18 +174,22 @@ class ListViewItems extends StatelessWidget {
 
         if (state.listService.isEmpty) {
           return Center(
-            child: Text('Lista vazia'),
+            child: Padding(
+              padding: const EdgeInsets.only(top: 300),
+              child: Text('Lista vazia'),
+            ),
           );
         }
 
-        return ListView.builder(
-          itemCount: state.listService.length,
-          itemBuilder: (context, index) {
-            return ItemList(
-              service: state.listService[index],
-              selectedService: selectedService,
-            );
-          },
+        return Expanded(
+          child: ListView.builder(
+            itemCount: state.listService.length,
+            itemBuilder: (context, index) {
+              return ItemList(
+                service: state.listService[index],
+              );
+            },
+          ),
         );
       },
     );
@@ -194,11 +201,9 @@ class ItemList extends StatelessWidget {
   const ItemList({
     super.key,
     required this.service,
-    required this.selectedService,
   });
 
   final ServiceDetails service;
-  final bool selectedService;
 
   @override
   Widget build(BuildContext context) {
@@ -206,19 +211,7 @@ class ItemList extends StatelessWidget {
     var theme = Theme.of(context).textTheme;
     return GestureDetector(
       onTap: () async {
-        if (selectedService) {
-          Navigator.pop(context, service);
-          return;
-        }
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ServiceDetail(
-              serviceDetails: service,
-            ),
-          ),
-        );
-
+          await context.push('/registerFormService/${service.serviceId}');
         await state.loadData();
       },
       child: Padding(
@@ -248,15 +241,15 @@ class ItemList extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      service.customerName,
+                      service.customerName ?? '',
                       style: theme.titleLarge,
                     ),
                     Text(
-                      service.document,
+                      service.customerDocument ?? '',
                       style: theme.titleMedium,
                     ),
                     Text(
-                      service.vehicleModel,
+                      service.vehicleModel ?? '',
                       style: theme.titleMedium,
                     ),
                   ],
@@ -264,9 +257,9 @@ class ItemList extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.only(top: 10),
                   child: Text(
-                    service.status == 0 ? 'Em Andamento' : 'Finalizado',
+                    service.statusLabel,
                     style: TextStyle(
-                      color: service.status == 0 ? Colors.green : Colors.red,
+                      color: service.status == 0 ? Colors.green : service.status == 1 ? Colors.yellowAccent : Colors.red,
                     ),
                   ),
                 ),
@@ -387,10 +380,6 @@ class _FilterDialog extends StatelessWidget {
                 document: state.documentController.text,
                 plate: state.plateController.text,
               );
-
-
-
-
              await state.applyFilter(filter);
               if(context.mounted){
                 Navigator.pop(context);
@@ -398,6 +387,36 @@ class _FilterDialog extends StatelessWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Botão para salvar edição
+class _AddServiceButton extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    var state = Provider.of<ListServicesState>(context);
+    return GestureDetector(
+      onTap: () async {
+        await context.push('/registerService');
+        state.loadData();
+      },
+      child: SizedBox(
+        height: 50,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.blue.shade700,
+            borderRadius: BorderRadius.circular(
+              12,
+            ),
+            border: Border.all(color: Colors.blue.shade700, width: 1),
+          ),
+          child: Center(
+            child: Text('Iniciar novo serviço'),
+          ),
+        ),
       ),
     );
   }
@@ -422,3 +441,5 @@ class ServiceFilter {
     return 'ServiceFilter{situation: $situation, name: $name, document: $document, plate: $plate}';
   }
 }
+
+

@@ -1,48 +1,41 @@
 import 'dart:async';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:workshop_front_end/customer/entities/customer.dart';
-import 'package:workshop_front_end/customer/custom_view.dart';
-import '../domain/use_case_customer.dart';
+import 'package:workshop_front_end/repository/repository_vehicle.dart';
+import 'package:workshop_front_end/vehicle/vehicle_form.dart';
+import '../domain/use_case_vehicle.dart';
 import '../login/entities/login.dart';
 import '../login/view.dart';
-import '../repository/repository_customer.dart';
-import '../service/service_form.dart';
-import '../util/modal.dart';
+import '../service/entities/vehicle.dart';
 
-class ListCustomersState with ChangeNotifier {
-  ListCustomersState({required User? user}) {
+class _ListVehicleState with ChangeNotifier {
+  _ListVehicleState({required User? user}) {
     _init(user: user);
   }
 
-   User? _user;
-
-  final listCustomer = <Customer>[];
+  final listVehicles = <Vehicle>[];
   bool _loading = true;
 
   get loading => _loading;
 
   Future<void> _init({User? user}) async {
     try {
-      if(user != null){
-        _user = user;
-      }
       await loadData();
     } catch (e) {
-      Logger.detached('Error in customer');
+      Logger.detached('Error in vehicle');
     }
   }
 
   Future<void> loadData() async {
-    final repository = RepositoryCustomer();
-    final useCaseCustomer = UseCaseCustomer(repository);
+    final repository = RepositoryVehicle();
+    final useCase = UseCaseVehicle(repository);
 
-    var result = await useCaseCustomer.listCustomers(idUser: _user?.id);
+    var result = await useCase.getAllVehicles();
 
-    listCustomer
+
+    listVehicles
       ..clear()
       ..addAll(result);
     _loading = false;
@@ -50,29 +43,30 @@ class ListCustomersState with ChangeNotifier {
   }
 }
 
-class ListCustomer extends StatelessWidget {
+class ListVehicle extends StatelessWidget {
   /// Default constructor
-  const ListCustomer({super.key, this.selectedCustomer = false});
+  const ListVehicle({super.key, this.selectedVehicle = false});
 
-  final bool selectedCustomer;
+  final bool selectedVehicle;
 
   @override
   Widget build(BuildContext context) {
     var user = Provider.of<LoginState>(context, listen: false).user;
-    return ChangeNotifierProvider<ListCustomersState>(
-      create: (_) => ListCustomersState(user: user),
+    return ChangeNotifierProvider<_ListVehicleState>(
+      create: (_) => _ListVehicleState(user: user),
       child: Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          title: Text("Lista de clientes"),
+          title: Text("Lista de veículos"),
           backgroundColor: Colors.blue.shade700,
         ),
         body: Column(
           children: [
             Padding(
-                padding: const EdgeInsets.all(18.0),
-                child: _AddCustomerButton()),
-            _ListViewItems(selectedCustomer: selectedCustomer),
+              padding: const EdgeInsets.all(18.0),
+              child: _AddVehicleButton(),
+            ),
+            _ListViewItems(selectedVehicle: selectedVehicle),
           ],
         ),
       ),
@@ -81,13 +75,13 @@ class ListCustomer extends StatelessWidget {
 }
 
 class _ListViewItems extends StatelessWidget {
-  const _ListViewItems({ required this.selectedCustomer});
+  const _ListViewItems({ required this.selectedVehicle});
 
-  final bool selectedCustomer;
+  final bool selectedVehicle;
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ListCustomersState>(
+    return Consumer<_ListVehicleState>(
       builder: (context, state, _) {
         if (state.loading) {
           return Center(
@@ -95,7 +89,7 @@ class _ListViewItems extends StatelessWidget {
           );
         }
 
-        if (state.listCustomer.isEmpty) {
+        if (state.listVehicles.isEmpty) {
           return Padding(
             padding: const EdgeInsets.only(top: 300),
             child: Align(
@@ -107,11 +101,11 @@ class _ListViewItems extends StatelessWidget {
 
         return Expanded(
           child: ListView.builder(
-            itemCount: state.listCustomer.length,
+            itemCount: state.listVehicles.length,
             itemBuilder: (context, index) {
               return _ItemList(
-                customer: state.listCustomer[index],
-                selectedCustomer: selectedCustomer,
+                vehicle: state.listVehicles[index],
+                selectedVehicle: selectedVehicle,
               );
             },
           ),
@@ -123,32 +117,31 @@ class _ListViewItems extends StatelessWidget {
 
 class _ItemList extends StatelessWidget {
   const _ItemList({
-    required this.customer,
-    required this.selectedCustomer,
+    required this.vehicle,
+    required this.selectedVehicle,
   });
 
-  final Customer customer;
-  final bool selectedCustomer;
+  final Vehicle vehicle;
+  final bool selectedVehicle;
 
   @override
   Widget build(BuildContext context) {
-    var state = Provider.of<ListCustomersState>(context);
+    var state = Provider.of<_ListVehicleState>(context);
     var theme = Theme.of(context).textTheme;
     return GestureDetector(
       onTap: () async {
-        if (selectedCustomer) {
-          Navigator.pop(context, customer);
+        if (selectedVehicle) {
+          Navigator.pop(context, vehicle);
           return;
         }
+
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => ChangeNotifierProvider(
-              create: (_) => ServiceState(),
-              child: RegisterCustomer(isEdit: true,customer: customer,),
-            ),
+            builder: (_) => RegisterVehicle(isEdit: true, vehicle: vehicle,),
           ),
         );
+
 
         await state.loadData();
       },
@@ -175,15 +168,15 @@ class _ItemList extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  customer.name ?? '',
+                  vehicle.brand,
                   style: theme.titleLarge,
                 ),
                 Text(
-                  customer.surname ?? '',
+                  vehicle.model,
                   style: theme.titleMedium,
                 ),
                 Text(
-                  customer.document ?? '',
+                  vehicle.plate,
                   style: theme.titleMedium,
                 ),
               ],
@@ -196,20 +189,17 @@ class _ItemList extends StatelessWidget {
 }
 
 
-
-
 /// Botão para salvar edição
-class _AddCustomerButton extends StatelessWidget {
+class _AddVehicleButton extends StatelessWidget {
 
 
   @override
   Widget build(BuildContext context) {
-    final state = Provider.of<ListCustomersState>(context);
+    var state = Provider.of<_ListVehicleState>(context);
     return GestureDetector(
       onTap: () async {
-
- await context.push('/registerCustomer');
-state.loadData();
+       await  context.push('/registerVehicle');
+       state.loadData();
       },
       child: SizedBox(
         height: 50,
@@ -222,7 +212,7 @@ state.loadData();
             border: Border.all(color: Colors.blue.shade700, width: 1),
           ),
           child: Center(
-            child: Text('Adicionar cliente'),
+            child: Text('Adicionar veículo'),
           ),
         ),
       ),
