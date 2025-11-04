@@ -1,78 +1,84 @@
 import 'package:flutter/material.dart';
-import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
-import 'package:workshop_front_end/repository/api_config.dart';
-import 'package:workshop_front_end/router/router.dart';
-import 'package:http/http.dart' as http;
-import 'package:workshop_front_end/service/service_form.dart';
-import 'package:workshop_front_end/setting/view.dart';
-import 'customer/custom_view.dart';
-import 'login/view.dart';
+import 'package:workshop_front_end/providers/service_provider.dart';
+import 'package:workshop_front_end/screens/services_screen.dart';
+import 'providers/client_provider.dart';
+import 'providers/mechanic_provider.dart';
+import 'providers/vehicle_provider.dart';
+import 'screens/clients_screen.dart';
+import 'screens/vehicles_screen.dart';
 
-final Logger _logger = Logger('RepositoryCustomer');
-final ThemeData lightTheme = ThemeData(
-  brightness: Brightness.light,
-  primaryColor: Colors.indigo,
-  scaffoldBackgroundColor: Color(0xFFD6EAF8),
-  appBarTheme: AppBarTheme(backgroundColor: Colors.blue[100]),
-);
-
-final ThemeData darkTheme = ThemeData(
-  brightness: Brightness.dark,
-  primaryColor: Colors.blueGrey,
-
-  /// cor 2 gradient no item home
-  scaffoldBackgroundColor: Colors.lightBlue.shade900,
-  appBarTheme: AppBarTheme(backgroundColor: Colors.blueGrey[900]),
-);
-
-void main() async {
-  try {
-    final baseURl = ApiConfig().baseUrl;
-    final response = await http.get(
-      Uri.parse('$baseURl/get_servidor'),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      _logger.info('Servidor rodando no front');
-    }
-  } catch (e) {
-    _logger.severe('Não rodou $e');
-  }
-  runApp(
-    MultiProvider(
-
-      providers: [
-        ChangeNotifierProvider<LoginState>(
-          create: (context) => LoginState(),
-        ),
-        ChangeNotifierProvider<SettingsState>(
-          create: (context) => SettingsState(),
-        ),
-      ],
-      child: const MyApp(),
-    ),
-  );
+void main() {
+  runApp(const MyApp());
 }
-
-final _router = RouterApp().router;
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<SettingsState>(context);
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => ClientProvider()),
+        ChangeNotifierProvider(create: (context) => MechanicProvider()),
+        ChangeNotifierProvider(create: (context) => VehicleProvider()),
+        ChangeNotifierProvider(create: (context) => ServiceProvider()),
+      ],
+      child: MaterialApp(
+        title: 'Sistema de Clientes e Veículos',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+        ),
+        home: const MainScreen(),
+        debugShowCheckedModeBanner: false,
+      ),
+    );
+  }
+}
 
-    return MaterialApp.router(
+class MainScreen extends StatefulWidget {
+  const MainScreen({super.key});
 
-      routerConfig: _router,
-      debugShowCheckedModeBanner: false,
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      themeMode: themeProvider.themeMode,
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
 
+class _MainScreenState extends State<MainScreen> {
+  int _currentIndex = 0;
+
+  final List<Widget> _screens = [
+    const ClientsScreen(),
+    const VehiclesScreen(),
+    const ServicesScreen(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: _screens[_currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people),
+            label: 'Clientes/Mecânicos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.directions_car),
+            label: 'Veículos',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.directions_car),
+            label: 'Serviços',
+          ),
+        ],
+      ),
     );
   }
 }
