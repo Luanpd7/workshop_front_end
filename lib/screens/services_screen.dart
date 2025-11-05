@@ -5,6 +5,7 @@ import '../providers/client_provider.dart';
 import '../models/service.dart';
 import '../models/client.dart';
 import 'service_form_screen.dart';
+import 'service_detail_screen.dart';
 
 
 class ServicesScreen extends StatefulWidget {
@@ -183,12 +184,12 @@ class _ServicesScreenState extends State<ServicesScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) => ServiceFormScreen(client: widget.client),
-          //   ),
-          // );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ServiceFormScreen(),
+            ),
+          );
         },
         child: const Icon(Icons.add),
       ),
@@ -350,70 +351,14 @@ class _ServiceCard extends StatelessWidget {
               ),
           ],
         ),
-        trailing: PopupMenuButton<String>(
-          onSelected: (value) {
-            switch (value) {
-              case 'view':
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => ServiceDetailScreen(service: service),
-                //   ),
-                // );
-                break;
-              case 'edit':
-                // Navigator.push(
-                //   context,
-                //   MaterialPageRoute(
-                //     builder: (context) => ServiceFormScreen(service: service),
-                //   ),
-                // );
-                break;
-              case 'delete':
-                _showDeleteDialog(context);
-                break;
-            }
-          },
-          itemBuilder: (context) => [
-            const PopupMenuItem(
-              value: 'view',
-              child: Row(
-                children: [
-                  Icon(Icons.visibility),
-                  SizedBox(width: 8),
-                  Text('Ver detalhes'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'edit',
-              child: Row(
-                children: [
-                  Icon(Icons.edit),
-                  SizedBox(width: 8),
-                  Text('Editar'),
-                ],
-              ),
-            ),
-            const PopupMenuItem(
-              value: 'delete',
-              child: Row(
-                children: [
-                  Icon(Icons.delete, color: Colors.red),
-                  SizedBox(width: 8),
-                  Text('Excluir', style: TextStyle(color: Colors.red)),
-                ],
-              ),
-            ),
-          ],
-        ),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (context) => ServiceDetailScreen(service: service),
-          //   ),
-          // );
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ServiceDetailScreen(service: service),
+            ),
+          );
         },
       ),
     );
@@ -439,32 +384,6 @@ class _ServiceCard extends StatelessWidget {
       case ServiceStatus.finished:
         return Icons.check_circle;
     }
-  }
-
-  void _showDeleteDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Excluir Serviço'),
-        content: Text('Tem certeza que deseja excluir o serviço #${service.id}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<ServiceProvider>().deleteService(service.id!);
-            },
-            child: const Text(
-              'Excluir',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   String _formatDate(DateTime date) {

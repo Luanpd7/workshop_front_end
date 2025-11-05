@@ -11,6 +11,7 @@ class Service {
   final int? id;
   final int clientId;
   final int vehicleId;
+  final int mechanicId;
   final String mechanicName;
   final DateTime? startDate;
   final DateTime? endDate;
@@ -26,6 +27,7 @@ class Service {
     this.id,
     required this.clientId,
     required this.vehicleId,
+    required this.mechanicId,
     required this.mechanicName,
     this.startDate,
     this.endDate,
@@ -43,6 +45,7 @@ class Service {
       id: json['id'] as int?,
       clientId: json['clientId'] as int,
       vehicleId: json['vehicleId'] as int,
+      mechanicId: json['mechanicId'] as int? ?? 0,
       mechanicName: json['mechanicName'] as String,
       startDate: json['startDate'] != null 
           ? DateTime.parse(json['startDate'] as String)
@@ -76,6 +79,7 @@ class Service {
       'id': id,
       'clientId': clientId,
       'vehicleId': vehicleId,
+      'mechanicId': mechanicId,
       'mechanicName': mechanicName,
       'startDate': startDate?.toIso8601String(),
       'endDate': endDate?.toIso8601String(),
@@ -93,6 +97,7 @@ class Service {
     int? id,
     int? clientId,
     int? vehicleId,
+    int? mechanicId,
     String? mechanicName,
     DateTime? startDate,
     DateTime? endDate,
@@ -108,6 +113,7 @@ class Service {
       id: id ?? this.id,
       clientId: clientId ?? this.clientId,
       vehicleId: vehicleId ?? this.vehicleId,
+      mechanicId: mechanicId ?? this.mechanicId,
       mechanicName: mechanicName ?? this.mechanicName,
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
