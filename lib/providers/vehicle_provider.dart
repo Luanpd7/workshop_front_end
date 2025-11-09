@@ -53,7 +53,6 @@ class VehicleProvider with ChangeNotifier {
     
     try {
 
-      print('------------------------- 3');
       final updatedVehicle = await _vehicleService.updateVehicle(vehicle);
       final index = _vehicles.indexWhere((v) => v.id == vehicle.id);
       if (index != -1) {

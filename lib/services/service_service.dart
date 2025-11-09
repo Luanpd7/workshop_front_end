@@ -14,7 +14,9 @@ class ServiceService {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+
         final servicesList = data['services'] as List;
+
         return servicesList.map((json) => Service.fromJson(json)).toList();
       } else {
         throw Exception('Erro ao buscar serviços: ${response.statusCode}');

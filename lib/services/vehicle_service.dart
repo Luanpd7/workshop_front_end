@@ -13,8 +13,6 @@ class VehicleService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         print('✅ Conectado ao backend com sucesso!');
-        print('Mensagem: ${data['message']}');
-        print('Horário: ${data['timestamp']}');
       } else {
         print('⚠️ Erro do servidor: ${response.statusCode}');
       }
@@ -26,7 +24,6 @@ class VehicleService {
   Future<List<Vehicle>> getAllVehicles() async {
     try {
 
-      print('estou aquiii');
 
       final response = await http.get(
         Uri.parse('$baseUrl/vehicles'),

@@ -40,12 +40,18 @@ class Service {
     this.status = ServiceStatus.pending,
   });
 
+
+  @override
+  String toString() {
+    return 'Service{id: $id, clientId: $clientId, vehicleId: $vehicleId, mechanicId: $mechanicId, mechanicName: $mechanicName, startDate: $startDate, endDate: $endDate, notes: $notes, parts: $parts, beforeImages: $beforeImages, afterImages: $afterImages, audioRecord: $audioRecord, totalCost: $totalCost, status: $status}';
+  }
+
   factory Service.fromJson(Map<String, dynamic> json) {
     return Service(
       id: json['id'] as int?,
       clientId: json['clientId'] as int,
       vehicleId: json['vehicleId'] as int,
-      mechanicId: json['mechanicId'] as int? ?? 0,
+      mechanicId: json['mechanic_id'] as int? ?? 0,
       mechanicName: json['mechanicName'] as String,
       startDate: json['startDate'] != null 
           ? DateTime.parse(json['startDate'] as String)

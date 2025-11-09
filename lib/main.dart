@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:workshop_front_end/providers/service_provider.dart';
-import 'package:workshop_front_end/screens/services_screen.dart';
 import 'providers/client_provider.dart';
 import 'providers/mechanic_provider.dart';
 import 'providers/vehicle_provider.dart';
-import 'screens/clients_screen.dart';
-import 'screens/vehicles_screen.dart';
+import 'providers/auth_provider.dart';
+import 'providers/settings_provider.dart';
+import 'screens/login_screen.dart';
+import 'screens/manager_home_screen.dart';
+import 'screens/mechanic_home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,66 +23,71 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (context) => SettingsProvider()),
+        ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (context) => ClientProvider()),
         ChangeNotifierProvider(create: (context) => MechanicProvider()),
         ChangeNotifierProvider(create: (context) => VehicleProvider()),
         ChangeNotifierProvider(create: (context) => ServiceProvider()),
       ],
-      child: MaterialApp(
-        title: 'Sistema de Clientes e Veículos',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
-        home: const MainScreen(),
-        debugShowCheckedModeBanner: false,
+      child: Consumer<SettingsProvider>(
+        builder: (context, settingsProvider, child) {
+          return MaterialApp(
+            title: 'Sistema de Oficina',
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+              useMaterial3: true,
+            ),
+            darkTheme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: Colors.deepPurple,
+                brightness: Brightness.dark,
+              ),
+              useMaterial3: true,
+            ),
+            themeMode: settingsProvider.themeMode,
+            locale: settingsProvider.currentLocale,
+            supportedLocales: const [
+              Locale('pt', 'BR'),
+              Locale('en', 'US'),
+            ],
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: const AuthWrapper(),
+            routes: {
+              '/login': (context) => const LoginScreen(),
+            },
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }
 }
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
-
-  @override
-  State<MainScreen> createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = [
-    const ClientsScreen(),
-    const VehiclesScreen(),
-    const ServicesScreen(),
-  ];
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people),
-            label: 'Clientes/Mecânicos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_car),
-            label: 'Veículos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.directions_car),
-            label: 'Serviços',
-          ),
-        ],
-      ),
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        if (!authProvider.isLoggedIn) {
+          return const LoginScreen();
+        }
+
+        if (authProvider.isManager) {
+          return const ManagerHomeScreen();
+        } else if (authProvider.isMechanic) {
+          return const MechanicHomeScreen();
+        }
+
+        return const LoginScreen();
+      },
     );
   }
 }

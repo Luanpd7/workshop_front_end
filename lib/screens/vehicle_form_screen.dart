@@ -29,7 +29,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
   @override
   void initState() {
     super.initState();
-    print('--------------- ${widget.client}');
     _selectedClient = widget.client;
     
     if (isEditing) {
@@ -52,9 +51,7 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
   }
 
   void _saveVehicle() {
-    print('------------------------- 0');
     if (_formKey.currentState!.validate() && _selectedClient != null) {
-      print('------------------------- 1');
       final vehicle = Vehicle(
         id: widget.vehicle?.id,
         clientId: _selectedClient!.id!,
@@ -70,7 +67,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
       );
 
       if (isEditing) {
-        print('------------------------- 2');
         context.read<VehicleProvider>().updateVehicle(vehicle);
       } else {
         context.read<VehicleProvider>().createVehicle(vehicle);
