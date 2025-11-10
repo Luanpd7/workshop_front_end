@@ -1,0 +1,101 @@
+{
+  "@@locale": "en_US",
+  "appTitle": "Workshop System",
+  "@appTitle": {
+    "description": "Application title"
+  },
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings screen title"
+  },
+  "language": "Language",
+  "@language": {
+    "description": "Label for language selection"
+  },
+  "theme": "Theme",
+  "@theme": {
+    "description": "Label for theme selection"
+  },
+  "portuguese": "Português",
+  "@portuguese": {
+    "description": "Portuguese language name"
+  },
+  "english": "English",
+  "@english": {
+    "description": "English language name"
+  },
+  "light": "Light",
+  "@light": {
+    "description": "Light theme"
+  },
+  "dark": "Dark",
+  "@dark": {
+    "description": "Dark theme"
+  },
+  "system": "System",
+  "@system": {
+    "description": "System theme"
+  },
+  "logout": "Logout",
+  "@logout": {
+    "description": "Logout button"
+  },
+  "managerArea": "Manager Area",
+  "@managerArea": {
+    "description": "Manager area title"
+  },
+  "myServices": "My Services",
+  "@myServices": {
+    "description": "Mechanic services screen title"
+  },
+  "clientsMechanics": "Clients/Mechanics",
+  "@clientsMechanics": {
+    "description": "Label for clients and mechanics"
+  },
+  "vehicles": "Vehicles",
+  "@vehicles": {
+    "description": "Label for vehicles"
+  },
+  "services": "Services",
+  "@services": {
+    "description": "Label for services"
+  },
+  "searchServices": "Search services...",
+  "@searchServices": {
+    "description": "Placeholder for service search"
+  },
+  "noServiceAssigned": "No service assigned",
+  "@noServiceAssigned": {
+    "description": "Message when there are no services"
+  },
+  "noServiceAssignedDescription": "You don't have any assigned services yet",
+  "@noServiceAssignedDescription": {
+    "description": "Description when there are no services"
+  },
+  "errorLoadingServices": "Error loading services",
+  "@errorLoadingServices": {
+    "description": "Error message when loading services"
+  },
+  "tryAgain": "Try again",
+  "@tryAgain": {
+    "description": "Button to try again"
+  },
+  "service": "Service",
+  "@service": {
+    "description": "Service word"
+  },
+  "status": "Status",
+  "@status": {
+    "description": "Status label"
+  },
+  "startDate": "Start",
+  "@startDate": {
+    "description": "Start date label"
+  },
+  "value": "Value",
+  "@value": {
+    "description": "Value label"
+  }
+}
+
+

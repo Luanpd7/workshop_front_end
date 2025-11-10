@@ -1,4 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart' hide ServiceStatus;
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/service_provider.dart';
 import '../providers/client_provider.dart';
@@ -18,10 +22,15 @@ class ServiceFormScreen extends StatefulWidget {
 
 class _ServiceFormScreenState extends State<ServiceFormScreen> {
   final _formKey = GlobalKey<FormState>();
+  final ImagePicker _imagePicker = ImagePicker();
+
+  
   Client? _selectedClient;
   Vehicle? _selectedVehicle;
   Mechanic? _selectedMechanic;
   List<Vehicle> _clientVehicles = [];
+  List<String> _beforeImages = [];
+
 
   @override
   void initState() {
@@ -30,6 +39,11 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
       context.read<ClientProvider>().loadClients();
       context.read<MechanicProvider>().loadMechanics();
     });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   void _onClientChanged(Client? client) {
@@ -50,6 +64,60 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
     }
   }
 
+  Future<void> _requestPermissions() async {
+    await [
+      Permission.camera,
+      Permission.microphone,
+      Permission.storage,
+    ].request();
+  }
+
+  Future<void> _pickBeforeImage() async {
+    await _requestPermissions();
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        setState(() {
+          _beforeImages.add(image.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao capturar imagem: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _removeBeforeImage(int index) {
+    setState(() {
+      _beforeImages.removeAt(index);
+    });
+  }
+
+
+
+
+
+
+
+
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
+  }
+
   Future<void> _saveService() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedClient == null || _selectedMechanic == null || _selectedVehicle == null) {
@@ -62,6 +130,8 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
         return;
       }
 
+
+
       final service = Service(
         clientId: _selectedClient!.id!,
         vehicleId: _selectedVehicle!.id!,
@@ -69,6 +139,7 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
         mechanicName: _selectedMechanic!.name,
         startDate: DateTime.now(),
         status: ServiceStatus.inProgress,
+        beforeImages: _beforeImages,
       );
 
       await context.read<ServiceProvider>().createService(service);
@@ -240,6 +311,96 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                     },
                   );
                 },
+              ),
+              const SizedBox(height: 24),
+
+
+              // Fotos Antes
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.camera_alt, color: Theme.of(context).colorScheme.secondary),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Fotos do Veículo (Antes)',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tire fotos do estado atual do veículo',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: _pickBeforeImage,
+                        icon: const Icon(Icons.add_a_photo),
+                        label: const Text('Tirar Foto'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                      if (_beforeImages.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: List.generate(_beforeImages.length, (index) {
+                            final imagePath = _beforeImages[index];
+                            return Stack(
+                              children: [
+                                Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.file(
+                                      File(imagePath),
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return const Icon(Icons.error);
+                                      },
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: 0,
+                                  right: 0,
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: IconButton(
+                                      icon: const Icon(Icons.close, color: Colors.white, size: 16),
+                                      onPressed: () => _removeBeforeImage(index),
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(height: 24),
 

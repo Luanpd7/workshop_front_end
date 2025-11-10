@@ -1,0 +1,101 @@
+{
+  "@@locale": "pt_BR",
+  "appTitle": "Sistema de Oficina",
+  "@appTitle": {
+    "description": "Título do aplicativo"
+  },
+  "settings": "Configurações",
+  "@settings": {
+    "description": "Título da tela de configurações"
+  },
+  "language": "Idioma",
+  "@language": {
+    "description": "Label para seleção de idioma"
+  },
+  "theme": "Tema",
+  "@theme": {
+    "description": "Label para seleção de tema"
+  },
+  "portuguese": "Português",
+  "@portuguese": {
+    "description": "Nome do idioma português"
+  },
+  "english": "English",
+  "@english": {
+    "description": "Nome do idioma inglês"
+  },
+  "light": "Claro",
+  "@light": {
+    "description": "Tema claro"
+  },
+  "dark": "Escuro",
+  "@dark": {
+    "description": "Tema escuro"
+  },
+  "system": "Sistema",
+  "@system": {
+    "description": "Tema do sistema"
+  },
+  "logout": "Sair",
+  "@logout": {
+    "description": "Botão de logout"
+  },
+  "managerArea": "Área do Gerente",
+  "@managerArea": {
+    "description": "Título da área do gerente"
+  },
+  "myServices": "Meus Serviços",
+  "@myServices": {
+    "description": "Título da tela de serviços do mecânico"
+  },
+  "clientsMechanics": "Clientes/Mecânicos",
+  "@clientsMechanics": {
+    "description": "Label para clientes e mecânicos"
+  },
+  "vehicles": "Veículos",
+  "@vehicles": {
+    "description": "Label para veículos"
+  },
+  "services": "Serviços",
+  "@services": {
+    "description": "Label para serviços"
+  },
+  "searchServices": "Pesquisar serviços...",
+  "@searchServices": {
+    "description": "Placeholder para pesquisa de serviços"
+  },
+  "noServiceAssigned": "Nenhum serviço atribuído",
+  "@noServiceAssigned": {
+    "description": "Mensagem quando não há serviços"
+  },
+  "noServiceAssignedDescription": "Você ainda não possui serviços atribuídos",
+  "@noServiceAssignedDescription": {
+    "description": "Descrição quando não há serviços"
+  },
+  "errorLoadingServices": "Erro ao carregar serviços",
+  "@errorLoadingServices": {
+    "description": "Mensagem de erro ao carregar serviços"
+  },
+  "tryAgain": "Tentar novamente",
+  "@tryAgain": {
+    "description": "Botão para tentar novamente"
+  },
+  "service": "Serviço",
+  "@service": {
+    "description": "Palavra serviço"
+  },
+  "status": "Status",
+  "@status": {
+    "description": "Label de status"
+  },
+  "startDate": "Início",
+  "@startDate": {
+    "description": "Label de data de início"
+  },
+  "value": "Valor",
+  "@value": {
+    "description": "Label de valor"
+  }
+}
+
+

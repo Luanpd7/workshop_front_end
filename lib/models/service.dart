@@ -5,6 +5,7 @@ enum ServiceStatus {
   pending,
   inProgress,
   finished,
+  washing, // Lavagem/Polimento
 }
 
 class Service {
@@ -21,6 +22,8 @@ class Service {
   final List<String> afterImages;
   final String? audioRecord;
   final double totalCost;
+  final double laborCost; // Custo de mão de obra
+  final double laborHours; // Horas trabalhadas
   final ServiceStatus status;
 
   Service({
@@ -37,13 +40,15 @@ class Service {
     this.afterImages = const [],
     this.audioRecord,
     this.totalCost = 0.0,
+    this.laborCost = 0.0,
+    this.laborHours = 0.0,
     this.status = ServiceStatus.pending,
   });
 
 
   @override
   String toString() {
-    return 'Service{id: $id, clientId: $clientId, vehicleId: $vehicleId, mechanicId: $mechanicId, mechanicName: $mechanicName, startDate: $startDate, endDate: $endDate, notes: $notes, parts: $parts, beforeImages: $beforeImages, afterImages: $afterImages, audioRecord: $audioRecord, totalCost: $totalCost, status: $status}';
+    return 'Service{id: $id, clientId: $clientId, vehicleId: $vehicleId, mechanicId: $mechanicId, mechanicName: $mechanicName, startDate: $startDate, endDate: $endDate, notes: $notes, parts: $parts, beforeImages: $beforeImages, afterImages: $afterImages, audioRecord: $audioRecord, totalCost: $totalCost, laborCost: $laborCost, laborHours: $laborHours, status: $status}';
   }
 
   factory Service.fromJson(Map<String, dynamic> json) {
@@ -73,6 +78,8 @@ class Service {
           : [],
       audioRecord: json['audioRecord'] as String?,
       totalCost: (json['totalCost'] as num?)?.toDouble() ?? 0.0,
+      laborCost: (json['laborCost'] as num?)?.toDouble() ?? 0.0,
+      laborHours: (json['laborHours'] as num?)?.toDouble() ?? 0.0,
       status: ServiceStatus.values.firstWhere(
         (e) => e.name == json['status'],
         orElse: () => ServiceStatus.pending,
@@ -95,6 +102,8 @@ class Service {
       'afterImages': afterImages,
       'audioRecord': audioRecord,
       'totalCost': totalCost,
+      'laborCost': laborCost,
+      'laborHours': laborHours,
       'status': status.name,
     };
   }
@@ -113,6 +122,8 @@ class Service {
     List<String>? afterImages,
     String? audioRecord,
     double? totalCost,
+    double? laborCost,
+    double? laborHours,
     ServiceStatus? status,
   }) {
     return Service(
@@ -129,6 +140,8 @@ class Service {
       afterImages: afterImages ?? this.afterImages,
       audioRecord: audioRecord ?? this.audioRecord,
       totalCost: totalCost ?? this.totalCost,
+      laborCost: laborCost ?? this.laborCost,
+      laborHours: laborHours ?? this.laborHours,
       status: status ?? this.status,
     );
   }
@@ -141,6 +154,8 @@ class Service {
         return 'Em Andamento';
       case ServiceStatus.finished:
         return 'Finalizado';
+      case ServiceStatus.washing:
+        return 'Lavagem/Polimento';
     }
   }
 
@@ -163,5 +178,14 @@ class Service {
 
   double get partsTotal {
     return parts.fold(0.0, (sum, part) => sum + part.total);
+  }
+
+  double get serviceTotal {
+    return partsTotal + laborCost;
+  }
+
+  // Método para calcular o total automaticamente
+  double calculateTotal() {
+    return partsTotal + laborCost;
   }
 }
