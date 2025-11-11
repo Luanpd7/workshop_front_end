@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../models/repart.dart';
+
 class ReportService {
   static const String baseUrl = 'http://192.168.1.5:8080/api';
 
@@ -15,7 +17,8 @@ class ReportService {
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
-        throw Exception('Erro ao buscar relatório de peças: ${response.statusCode}');
+        throw Exception(
+            'Erro ao buscar relatório de peças: ${response.statusCode}');
       }
     } catch (e) {
       throw Exception('Erro de conexão: $e');
@@ -30,14 +33,17 @@ class ReportService {
         headers: {'Content-Type': 'application/json'},
       );
 
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        throw Exception('Erro ao buscar relatório de serviços: ${response.statusCode}');
+        if (response.statusCode == 200) {
+          return json.decode(response.body);
+        } else {
+          throw Exception(
+              'Erro ao buscar relatório de serviços: ${response.statusCode}');
+        }
+      } catch (e) {
+        throw Exception('Erro de conexão: $e');
       }
-    } catch (e) {
-      throw Exception('Erro de conexão: $e');
     }
   }
-}
+
+
 

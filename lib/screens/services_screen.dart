@@ -373,8 +373,7 @@ class _ServiceCard extends StatelessWidget {
       case ServiceStatus.finished:
         return Colors.green;
       case ServiceStatus.washing:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        return Colors.deepPurple;
     }
   }
 
@@ -387,8 +386,7 @@ class _ServiceCard extends StatelessWidget {
       case ServiceStatus.finished:
         return Icons.check_circle;
       case ServiceStatus.washing:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        return Icons.cleaning_services_outlined;
     }
   }
 
