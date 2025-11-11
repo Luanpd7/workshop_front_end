@@ -4,6 +4,7 @@ import '../providers/vehicle_provider.dart';
 import '../providers/client_provider.dart';
 import '../models/vehicle.dart';
 import '../models/client.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class VehicleFormScreen extends StatefulWidget {
   final Vehicle? vehicle;
@@ -22,6 +23,16 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
   final _yearController = TextEditingController();
   final _colorController = TextEditingController();
   final _plateController = TextEditingController();
+
+  // Mascara padrão placa (formato antigo): ABC-1234
+  final _plateMask = MaskTextInputFormatter(
+    mask: 'AAA-####',
+    filter: {
+      'A': RegExp(r'[A-Za-z]'),
+      '#': RegExp(r'[0-9]'),
+    },
+    type: MaskAutoCompletionType.lazy,
+  );
 
   Client? _selectedClient;
   bool get isEditing => widget.vehicle != null;
@@ -237,6 +248,7 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                   border: OutlineInputBorder(),
                 ),
                 textCapitalization: TextCapitalization.characters,
+                inputFormatters: [_plateMask],
                 validator: (value) {
                   if (value != null && value.trim().isNotEmpty) {
                     final plate = value.trim().toUpperCase();

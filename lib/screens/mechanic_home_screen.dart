@@ -269,8 +269,8 @@ class _MechanicServiceCard extends StatelessWidget {
         statusIcon = Icons.check_circle;
         break;
       case ServiceStatus.washing:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        statusColor = Colors.purple;
+        statusIcon = Icons.cleaning_services_outlined;
     }
 
     return Card(

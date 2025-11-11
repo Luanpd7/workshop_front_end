@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/client_provider.dart';
 import '../models/client.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class ClientFormScreen extends StatefulWidget {
   final Client? client;
@@ -17,6 +18,13 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+
+  // Mascara dinâmica para telefone brasileiro (10 ou 11 dígitos)
+  final _phoneMask = MaskTextInputFormatter(
+    mask: '(##) #####-####',
+    filter: { '#': RegExp(r'[0-9]') },
+    type: MaskAutoCompletionType.lazy,
+  );
 
   bool get isEditing => widget.client != null;
 
@@ -125,6 +133,7 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.phone,
+                inputFormatters: [_phoneMask],
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Telefone é obrigatório';

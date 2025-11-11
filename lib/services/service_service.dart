@@ -66,10 +66,9 @@ class ServiceService {
 
   Future<List<Service>> getServicesByMechanic(String mechanicName) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/services/byMechanic?name=$mechanicName'),
-        headers: {'Content-Type': 'application/json'},
-      );
+      final uri = Uri.parse('$baseUrl/services/byMechanic')
+          .replace(queryParameters: {'name': mechanicName});
+      final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -156,10 +155,9 @@ class ServiceService {
 
   Future<List<Service>> searchServices(String query) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/services/search?q=$query'),
-        headers: {'Content-Type': 'application/json'},
-      );
+      final uri = Uri.parse('$baseUrl/services/search')
+          .replace(queryParameters: {'q': query});
+      final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

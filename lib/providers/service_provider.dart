@@ -30,7 +30,15 @@ class ServiceProvider with ChangeNotifier {
     _filterMechanic = mechanic;
     
     try {
-      _services = await _serviceService.getAllServices();
+      if (clientId != null) {
+        _services = await _serviceService.getServicesByClientId(clientId);
+      } else if (status != null && status.isNotEmpty) {
+        _services = await _serviceService.getServicesByStatus(status);
+      } else if (mechanic != null && mechanic.isNotEmpty) {
+        _services = await _serviceService.getServicesByMechanic(mechanic);
+      } else {
+        _services = await _serviceService.getAllServices();
+      }
 
     } catch (e) {
       _setError('Erro ao carregar serviços: $e');

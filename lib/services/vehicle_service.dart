@@ -11,7 +11,6 @@ class VehicleService {
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
         print('✅ Conectado ao backend com sucesso!');
       } else {
         print('⚠️ Erro do servidor: ${response.statusCode}');
@@ -149,10 +148,9 @@ class VehicleService {
 
   Future<List<Vehicle>> searchVehicles(String query) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/vehicles/search?q=$query'),
-        headers: {'Content-Type': 'application/json'},
-      );
+      final uri = Uri.parse('$baseUrl/vehicles/search')
+          .replace(queryParameters: {'q': query});
+      final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

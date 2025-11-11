@@ -105,10 +105,9 @@ class ClientService {
 
   Future<List<Client>> searchClients(String query) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/clients/search?q=$query'),
-        headers: {'Content-Type': 'application/json'},
-      );
+      final uri = Uri.parse('$baseUrl/clients/search')
+          .replace(queryParameters: {'q': query});
+      final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);

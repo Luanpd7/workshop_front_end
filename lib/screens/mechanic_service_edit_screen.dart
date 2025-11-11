@@ -6,6 +6,8 @@ import '../models/service.dart';
 import '../models/note.dart';
 import '../models/part.dart';
 import '../providers/service_provider.dart';
+import 'package:flutter/services.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 
 class MechanicServiceEditScreen extends StatefulWidget {
   final Service service;
@@ -26,6 +28,13 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
   final _partQuantityController = TextEditingController();
   final _laborHoursController = TextEditingController();
   final _laborCostController = TextEditingController();
+
+  // Máscaras para preço (duas casas decimais) e quantidade (inteiro)
+  final _currencyMask = MaskTextInputFormatter(
+    mask: '##########,##',
+    filter: { '#': RegExp(r'[0-9]') },
+    type: MaskAutoCompletionType.lazy,
+  );
 
   late Service _service;
   List<Note> _notes = [];
@@ -253,7 +262,6 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
   @override
   Widget build(BuildContext context) {
     final partsTotal = _parts.fold(0.0, (sum, part) => sum + part.total);
-    final laborHours = double.tryParse(_laborHoursController.text.replaceAll(',', '.')) ?? 0.0;
     final laborCost = double.tryParse(_laborCostController.text.replaceAll(',', '.')) ?? 0.0;
     final totalCost = partsTotal + laborCost;
 
@@ -474,6 +482,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                     border: OutlineInputBorder(),
                                   ),
                                   keyboardType: TextInputType.number,
+                                  inputFormatters: [_currencyMask],
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -485,6 +494,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                     border: OutlineInputBorder(),
                                   ),
                                   keyboardType: TextInputType.number,
+                                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                                 ),
                               ),
                             ],
@@ -586,6 +596,9 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                     prefixIcon: Icon(Icons.access_time),
                                   ),
                                   keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(RegExp(r'[0-9\\.,]')),
+                                  ],
                                   onChanged: (value) {
                                     setState(() {});
                                   },
@@ -602,6 +615,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                     prefixIcon: Icon(Icons.attach_money),
                                   ),
                                   keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                  inputFormatters: [_currencyMask],
                                   onChanged: (value) {
                                     setState(() {});
                                   },
