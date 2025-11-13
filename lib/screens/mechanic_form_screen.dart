@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:provider/provider.dart';
 import '../providers/mechanic_provider.dart';
 import '../models/mechanic.dart';
@@ -37,6 +38,14 @@ class _MechanicFormScreenState extends State<MechanicFormScreen> {
     _emailController.dispose();
     super.dispose();
   }
+
+  // Mascara dinâmica para telefone brasileiro (10 ou 11 dígitos)
+  final _phoneMask = MaskTextInputFormatter(
+    mask: '(##) #####-####',
+    filter: { '#': RegExp(r'[0-9]') },
+    type: MaskAutoCompletionType.lazy,
+  );
+
 
   void _saveMechanic() {
     if (_formKey.currentState!.validate()) {
@@ -125,6 +134,7 @@ class _MechanicFormScreenState extends State<MechanicFormScreen> {
                   border: OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.phone,
+                inputFormatters: [_phoneMask],
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Telefone é obrigatório';

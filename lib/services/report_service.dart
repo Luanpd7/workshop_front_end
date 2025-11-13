@@ -1,18 +1,18 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-import '../models/repart.dart';
+
 
 class ReportService {
-  static const String baseUrl = 'http://192.168.1.5:8080/api';
+  static const String baseUrl = 'http://192.168.1.10:8080/api';
 
-  // Relatório de compra e venda de peças por mês
   Future<Map<String, dynamic>> getPartsReportByMonth(int year, int month) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/reports/parts?year=$year&month=$month'),
-        headers: {'Content-Type': 'application/json'},
-      );
+      final uri = Uri.parse('$baseUrl/reports/parts').replace(queryParameters: {
+        'year': year.toString(),
+        'month': month.toString().padLeft(2, '0'),
+      });
+      final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
 
       if (response.statusCode == 200) {
         return json.decode(response.body);
@@ -25,26 +25,22 @@ class ReportService {
     }
   }
 
-  // Relatório de serviços realizados por mês
   Future<Map<String, dynamic>> getServicesReportByMonth(int year, int month) async {
     try {
-      final response = await http.get(
-        Uri.parse('$baseUrl/reports/services?year=$year&month=$month'),
-        headers: {'Content-Type': 'application/json'},
-      );
+      final uri = Uri.parse('$baseUrl/reports/services').replace(queryParameters: {
+        'year': year.toString(),
+        'month': month.toString().padLeft(2, '0'),
+      });
+      final response = await http.get(uri, headers: {'Content-Type': 'application/json'});
 
-        if (response.statusCode == 200) {
-          return json.decode(response.body);
-        } else {
-          throw Exception(
-              'Erro ao buscar relatório de serviços: ${response.statusCode}');
-        }
-      } catch (e) {
-        throw Exception('Erro de conexão: $e');
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception(
+            'Erro ao buscar relatório de serviços: ${response.statusCode}');
       }
+    } catch (e) {
+      throw Exception('Erro de conexão: $e');
     }
   }
-
-
-
-
+}

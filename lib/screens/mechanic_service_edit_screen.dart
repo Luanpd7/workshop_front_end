@@ -527,10 +527,15 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                           color: Colors.green,
                                         ),
                                       ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                                        onPressed: () => _removePart(index),
-                                      ),
+                                      SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: IconButton(
+                                          padding: EdgeInsets.zero,
+                                          icon: Icon(Icons.delete, color: Colors.red, size: 20),
+                                          onPressed: () => _removePart(index),
+                                        ),
+                                      )
                                     ],
                                   ),
                                 ),
