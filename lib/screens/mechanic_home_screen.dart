@@ -4,6 +4,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../providers/auth_provider.dart';
 import '../providers/service_provider.dart';
 import '../models/service.dart';
+import '../util/format_number.dart';
 import 'mechanic_service_edit_screen.dart';
 import 'settings_screen.dart';
 
@@ -128,117 +129,120 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
           ],
         ),
       ),
-      body: Column(
-        children: [
-          // Barra de pesquisa
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: localizations.searchServices,
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          _onSearchChanged('');
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 10.0),
+        child: Column(
+          children: [
+            // Barra de pesquisa
+            // Padding(
+            //   padding: const EdgeInsets.all(16.0),
+            //   child: TextField(
+            //     controller: _searchController,
+            //     decoration: InputDecoration(
+            //       hintText: localizations.searchServices,
+            //       prefixIcon: const Icon(Icons.search),
+            //       suffixIcon: _searchController.text.isNotEmpty
+            //           ? IconButton(
+            //               icon: const Icon(Icons.clear),
+            //               onPressed: () {
+            //                 _searchController.clear();
+            //                 _onSearchChanged('');
+            //               },
+            //             )
+            //           : null,
+            //       border: OutlineInputBorder(
+            //         borderRadius: BorderRadius.circular(12),
+            //       ),
+            //     ),
+            //     onChanged: _onSearchChanged,
+            //   ),
+            // ),
+
+            // Lista de serviços
+            Expanded(
+              child: Consumer<ServiceProvider>(
+                builder: (context, provider, child) {
+                  if (provider.isLoading) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  if (provider.error != null) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: Colors.red[300],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            localizations.errorLoadingServices,
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            provider.error!,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              if (mechanicId != null) {
+                                provider.loadServices();
+                              }
+                            },
+                            icon: const Icon(Icons.refresh),
+                            label: Text(localizations.tryAgain),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final myServices = _myServices;
+
+                  if (myServices.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.build_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            localizations.noServiceAssigned,
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            localizations.noServiceAssignedDescription,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: myServices.length,
+                    itemBuilder: (context, index) {
+                      final service = myServices[index];
+                      return _MechanicServiceCard(service: service);
+                    },
+                  );
+                },
               ),
-              onChanged: _onSearchChanged,
             ),
-          ),
-          
-          // Lista de serviços
-          Expanded(
-            child: Consumer<ServiceProvider>(
-              builder: (context, provider, child) {
-                if (provider.isLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-
-                if (provider.error != null) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.red[300],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          localizations.errorLoadingServices,
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          provider.error!,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            if (mechanicId != null) {
-                              provider.loadServices();
-                            }
-                          },
-                          icon: const Icon(Icons.refresh),
-                          label: Text(localizations.tryAgain),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                final myServices = _myServices;
-
-                if (myServices.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.build_outlined,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          localizations.noServiceAssigned,
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          localizations.noServiceAssignedDescription,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  itemCount: myServices.length,
-                  itemBuilder: (context, index) {
-                    final service = myServices[index];
-                    return _MechanicServiceCard(service: service);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -292,7 +296,7 @@ class _MechanicServiceCard extends StatelessWidget {
               Text('${localizations.startDate}: ${_formatDate(service.startDate!)}'),
             if (service.totalCost > 0)
               Text(
-                '${localizations.value}: R\$ ${service.totalCost.toStringAsFixed(2)}',
+                '${localizations.value}: R\$ ${formatNumberBR(service.totalCost)}',
                 style: TextStyle(
                   color: Colors.green[700],
                   fontWeight: FontWeight.bold,

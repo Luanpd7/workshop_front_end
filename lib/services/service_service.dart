@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/service.dart';
 
 class ServiceService {
-  static const String baseUrl = 'http://192.168.1.10:8080/api';
+  static const String baseUrl = 'http://192.168.1.8:8080/api';
 
   Future<List<Service>> getAllServices() async {
     try {

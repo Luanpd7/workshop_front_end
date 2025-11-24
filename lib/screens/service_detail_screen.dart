@@ -9,6 +9,7 @@ import '../providers/client_provider.dart';
 import '../providers/mechanic_provider.dart';
 import '../providers/vehicle_provider.dart';
 import '../services/pdf_service.dart';
+import '../util/format_number.dart';
 
 class ServiceDetailScreen extends StatelessWidget {
   final Service service;
@@ -308,17 +309,17 @@ class ServiceDetailScreen extends StatelessWidget {
                         Expanded(
                           child: Text('${part.name} (${part.quantity}x)'),
                         ),
-                        Text('R\$ ${part.total.toStringAsFixed(2)}'),
+                        Text('R\$ ${formatNumberBR(part.total)}'),
                       ],
                     ),
                   )),
               const SizedBox(height: 8),
-              _InfoRow(label: 'Total de Peças', value: 'R\$ ${partsTotal.toStringAsFixed(2)}'),
+              _InfoRow(label: 'Total de Peças', value: 'R\$ ${formatNumberBR(partsTotal)}'),
             ],
             if (laborCost > 0) ...[
               const SizedBox(height: 8),
               _InfoRow(label: 'Horas Trabalhadas', value: '${service.laborHours.toStringAsFixed(2)}h'),
-              _InfoRow(label: 'Custo de Mão de Obra', value: 'R\$ ${laborCost.toStringAsFixed(2)}'),
+              _InfoRow(label: 'Custo de Mão de Obra', value: 'R\$ ${formatNumberBR(laborCost)}'),
             ],
             if (totalCost > 0) ...[
               const Divider(),
@@ -333,7 +334,7 @@ class ServiceDetailScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'R\$ ${totalCost.toStringAsFixed(2)}',
+                    'R\$ ${formatNumberBR(totalCost)}',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Colors.green[700],
@@ -552,7 +553,7 @@ class ServiceDetailScreen extends StatelessWidget {
               const SizedBox(height: 8),
               _InfoRow(
                 label: 'Valor Total',
-                value: 'R\$ ${service.totalCost.toStringAsFixed(2)}',
+                value: 'R\$ ${formatNumberBR(service.totalCost)}',
               ),
             ],
           ],

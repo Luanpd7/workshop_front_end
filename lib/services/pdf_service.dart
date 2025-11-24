@@ -5,6 +5,7 @@ import 'package:printing/printing.dart';
 import '../models/service.dart';
 import '../models/client.dart';
 import '../models/vehicle.dart';
+import '../util/format_number.dart';
 
 class PdfService {
   static Future<void> generateServiceReceipt({
@@ -280,11 +281,11 @@ class PdfService {
                         ),
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('R\$ ${part.price.toStringAsFixed(2)}'),
+                          child: pw.Text('R\$ ${formatNumberBR(part.price)}'),
                         ),
                         pw.Padding(
                           padding: const pw.EdgeInsets.all(8),
-                          child: pw.Text('R\$ ${part.total.toStringAsFixed(2)}'),
+                          child: pw.Text('R\$ ${formatNumberBR(part.total)}'),
                         ),
                       ],
                     )),
@@ -307,7 +308,7 @@ class PdfService {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text('Total de Peças:'),
-                    pw.Text('R\$ ${partsTotal.toStringAsFixed(2)}'),
+                    pw.Text('R\$ ${formatNumberBR(partsTotal)}'),
                   ],
                 ),
                 if (laborCost > 0) ...[
@@ -316,7 +317,7 @@ class PdfService {
                     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                     children: [
                       pw.Text('Mão de Obra:'),
-                      pw.Text('R\$ ${laborCost.toStringAsFixed(2)}'),
+                      pw.Text('R\$ ${formatNumberBR(laborCost)}'),
                     ],
                   ),
                 ],
@@ -332,7 +333,7 @@ class PdfService {
                       ),
                     ),
                     pw.Text(
-                      'R\$ ${totalCost.toStringAsFixed(2)}',
+                      'R\$ ${formatNumberBR(totalCost)}',
                       style: pw.TextStyle(
                         fontSize: 18,
                         fontWeight: pw.FontWeight.bold,
@@ -380,7 +381,7 @@ class PdfService {
                           ),
                           pw.SizedBox(height: 8),
                           pw.Text(
-                            'Peças\nR\$ ${partsTotal.toStringAsFixed(2)}',
+                            'Peças\nR\$ ${formatNumberBR(partsTotal)}',
                             textAlign: pw.TextAlign.center,
                             style: pw.TextStyle(fontSize: 10),
                           ),
@@ -408,7 +409,7 @@ class PdfService {
                           ),
                           pw.SizedBox(height: 8),
                           pw.Text(
-                            'Mão de Obra\nR\$ ${laborCost.toStringAsFixed(2)}',
+                            'Mão de Obra\nR\$ ${formatNumberBR(laborCost)}',
                             textAlign: pw.TextAlign.center,
                             style: pw.TextStyle(fontSize: 10),
                           ),

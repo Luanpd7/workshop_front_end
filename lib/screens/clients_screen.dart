@@ -84,218 +84,224 @@ class _ClientsScreenState extends State<ClientsScreen> with SingleTickerProvider
   }
 
   Widget _buildClientsTab() {
-    return Column(
-      children: [
-        // Barra de pesquisa
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: TextField(
-            controller: _clientSearchController,
-            decoration: InputDecoration(
-              hintText: 'Pesquisar clientes...',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _clientSearchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _clientSearchController.clear();
-                        _onClientSearchChanged('');
-                      },
-                    )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 10.0),
+      child: Column(
+        children: [
+          // Barra de pesquisa
+          // Padding(
+          //   padding: const EdgeInsets.all(16.0),
+          //   child: TextField(
+          //     controller: _clientSearchController,
+          //     decoration: InputDecoration(
+          //       hintText: 'Pesquisar clientes...',
+          //       prefixIcon: const Icon(Icons.search),
+          //       suffixIcon: _clientSearchController.text.isNotEmpty
+          //           ? IconButton(
+          //               icon: const Icon(Icons.clear),
+          //               onPressed: () {
+          //                 _clientSearchController.clear();
+          //                 _onClientSearchChanged('');
+          //               },
+          //             )
+          //           : null,
+          //       border: OutlineInputBorder(
+          //         borderRadius: BorderRadius.circular(12),
+          //       ),
+          //     ),
+          //     onChanged: _onClientSearchChanged,
+          //   ),
+          // ),
+          // Lista de clientes
+          Expanded(
+            child: Consumer<ClientProvider>(
+              builder: (context, provider, child) {
+                if (provider.isLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+
+                if (provider.error != null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red[300],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Erro ao carregar clientes',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          provider.error!,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => provider.loadClients(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Tentar novamente'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                if (provider.clients.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.people_outline,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Nenhum cliente encontrado',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Toque no botão + para adicionar um novo cliente',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: provider.clients.length,
+                  itemBuilder: (context, index) {
+                    final client = provider.clients[index];
+                    return _ClientCard(client: client);
+                  },
+                );
+              },
             ),
-            onChanged: _onClientSearchChanged,
           ),
-        ),
-        // Lista de clientes
-        Expanded(
-          child: Consumer<ClientProvider>(
-            builder: (context, provider, child) {
-              if (provider.isLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-
-              if (provider.error != null) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Colors.red[300],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Erro ao carregar clientes',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        provider.error!,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () => provider.loadClients(),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Tentar novamente'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              if (provider.clients.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.people_outline,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Nenhum cliente encontrado',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Toque no botão + para adicionar um novo cliente',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                itemCount: provider.clients.length,
-                itemBuilder: (context, index) {
-                  final client = provider.clients[index];
-                  return _ClientCard(client: client);
-                },
-              );
-            },
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildMechanicsTab() {
-    return Column(
-      children: [
-        // Barra de pesquisa
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: TextField(
-            controller: _mechanicSearchController,
-            decoration: InputDecoration(
-              hintText: 'Pesquisar mecânicos...',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _mechanicSearchController.text.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _mechanicSearchController.clear();
-                        _onMechanicSearchChanged('');
-                      },
-                    )
-                  : null,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+    return Padding(
+      padding: const EdgeInsets.only(top: 10.0),
+      child: Column(
+        children: [
+          // Barra de pesquisa
+          // Padding(
+          //   padding: const EdgeInsets.all(16.0),
+          //   child: TextField(
+          //     controller: _mechanicSearchController,
+          //     decoration: InputDecoration(
+          //       hintText: 'Pesquisar mecânicos...',
+          //       prefixIcon: const Icon(Icons.search),
+          //       suffixIcon: _mechanicSearchController.text.isNotEmpty
+          //           ? IconButton(
+          //               icon: const Icon(Icons.clear),
+          //               onPressed: () {
+          //                 _mechanicSearchController.clear();
+          //                 _onMechanicSearchChanged('');
+          //               },
+          //             )
+          //           : null,
+          //       border: OutlineInputBorder(
+          //         borderRadius: BorderRadius.circular(12),
+          //       ),
+          //     ),
+          //     onChanged: _onMechanicSearchChanged,
+          //   ),
+          // ),
+          // Lista de mecânicos
+          Expanded(
+            child: Consumer<MechanicProvider>(
+              builder: (context, provider, child) {
+                if (provider.isLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+
+                if (provider.error != null) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Colors.red[300],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Erro ao carregar mecânicos',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          provider.error!,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => provider.loadMechanics(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Tentar novamente'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                if (provider.mechanics.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.build_outlined,
+                          size: 64,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Nenhum mecânico encontrado',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Toque no botão + para adicionar um novo mecânico',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: provider.mechanics.length,
+                  itemBuilder: (context, index) {
+                    final mechanic = provider.mechanics[index];
+                    return _MechanicCard(mechanic: mechanic);
+                  },
+                );
+              },
             ),
-            onChanged: _onMechanicSearchChanged,
           ),
-        ),
-        // Lista de mecânicos
-        Expanded(
-          child: Consumer<MechanicProvider>(
-            builder: (context, provider, child) {
-              if (provider.isLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-
-              if (provider.error != null) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Colors.red[300],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Erro ao carregar mecânicos',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        provider.error!,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () => provider.loadMechanics(),
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Tentar novamente'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              if (provider.mechanics.isEmpty) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.build_outlined,
-                        size: 64,
-                        color: Colors.grey[400],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Nenhum mecânico encontrado',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Toque no botão + para adicionar um novo mecânico',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return ListView.builder(
-                itemCount: provider.mechanics.length,
-                itemBuilder: (context, index) {
-                  final mechanic = provider.mechanics[index];
-                  return _MechanicCard(mechanic: mechanic);
-                },
-              );
-            },
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

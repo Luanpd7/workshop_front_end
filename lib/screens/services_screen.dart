@@ -4,6 +4,7 @@ import '../providers/service_provider.dart';
 import '../providers/client_provider.dart';
 import '../models/service.dart';
 import '../models/client.dart';
+import '../util/format_number.dart';
 import 'service_form_screen.dart';
 import 'service_detail_screen.dart';
 
@@ -71,116 +72,119 @@ class _ServicesScreenState extends State<ServicesScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Barra de pesquisa
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Pesquisar serviços...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          _onSearchChanged('');
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+      body: Padding(
+        padding: const EdgeInsets.only(top: 10.0),
+        child: Column(
+          children: [
+            // Barra de pesquisa
+            // Padding(
+            //   padding: const EdgeInsets.all(16.0),
+            //   child: TextField(
+            //     controller: _searchController,
+            //     decoration: InputDecoration(
+            //       hintText: 'Pesquisar serviços...',
+            //       prefixIcon: const Icon(Icons.search),
+            //       suffixIcon: _searchController.text.isNotEmpty
+            //           ? IconButton(
+            //               icon: const Icon(Icons.clear),
+            //               onPressed: () {
+            //                 _searchController.clear();
+            //                 _onSearchChanged('');
+            //               },
+            //             )
+            //           : null,
+            //       border: OutlineInputBorder(
+            //         borderRadius: BorderRadius.circular(12),
+            //       ),
+            //     ),
+            //     onChanged: _onSearchChanged,
+            //   ),
+            // ),
+            // Filtros de status
+            if (widget.client == null) _buildStatusFilter(),
+            // Lista de serviços
+            Expanded(
+              child: Consumer<ServiceProvider>(
+                builder: (context, provider, child) {
+                  if (provider.isLoading) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+
+                  if (provider.error != null) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: Colors.red[300],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Erro ao carregar serviços',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            provider.error!,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () => provider.loadServices(clientId: widget.client?.id),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Tentar novamente'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  if (provider.services.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.build_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            widget.client != null
+                                ? 'Nenhum serviço encontrado'
+                                : 'Nenhum serviço cadastrado',
+                            style: Theme.of(context).textTheme.headlineSmall,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            widget.client != null
+                                ? 'Este cliente ainda não possui serviços'
+                                : 'Toque no botão + para adicionar um novo serviço',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: provider.services.length,
+                    itemBuilder: (context, index) {
+                      final service = provider.services[index];
+                      return _ServiceCard(service: service);
+                    },
+                  );
+                },
               ),
-              onChanged: _onSearchChanged,
             ),
-          ),
-          // Filtros de status
-          if (widget.client == null) _buildStatusFilter(),
-          // Lista de serviços
-          Expanded(
-            child: Consumer<ServiceProvider>(
-              builder: (context, provider, child) {
-                if (provider.isLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-
-                if (provider.error != null) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.red[300],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Erro ao carregar serviços',
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          provider.error!,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: () => provider.loadServices(clientId: widget.client?.id),
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Tentar novamente'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                if (provider.services.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.build_outlined,
-                          size: 64,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          widget.client != null 
-                              ? 'Nenhum serviço encontrado'
-                              : 'Nenhum serviço cadastrado',
-                          style: Theme.of(context).textTheme.headlineSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          widget.client != null
-                              ? 'Este cliente ainda não possui serviços'
-                              : 'Toque no botão + para adicionar um novo serviço',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  itemCount: provider.services.length,
-                  itemBuilder: (context, index) {
-                    final service = provider.services[index];
-                    return _ServiceCard(service: service);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -343,7 +347,7 @@ class _ServiceCard extends StatelessWidget {
             Text('Status: ${service.statusDisplay}'),
             if (service.totalCost > 0)
               Text(
-                'Valor: R\$ ${service.totalCost.toStringAsFixed(2)}',
+                'Valor: R\$ ${formatNumberBR(service.totalCost)}',
                 style: TextStyle(
                   color: Colors.green[700],
                   fontWeight: FontWeight.bold,

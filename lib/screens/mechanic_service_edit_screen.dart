@@ -8,6 +8,8 @@ import '../models/part.dart';
 import '../providers/service_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import '../util/format_number.dart';
+import 'package:intl/intl.dart';
 
 class MechanicServiceEditScreen extends StatefulWidget {
   final Service service;
@@ -29,12 +31,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
   final _laborHoursController = TextEditingController();
   final _laborCostController = TextEditingController();
 
-  // Máscaras para preço (duas casas decimais) e quantidade (inteiro)
-  final _currencyMask = MaskTextInputFormatter(
-    mask: '##########,##',
-    filter: { '#': RegExp(r'[0-9]') },
-    type: MaskAutoCompletionType.lazy,
-  );
+
 
   late Service _service;
   List<Note> _notes = [];
@@ -136,7 +133,10 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
       return;
     }
 
-    final price = double.tryParse(_partPriceController.text.replaceAll(',', '.'));
+    final price = double.tryParse(_partPriceController.text.replaceAll('R\$', '')
+        .replaceAll('.', '')
+        .replaceAll(' ', '')
+        .replaceAll(',', '.'));
     final quantity = int.tryParse(_partQuantityController.text);
 
     if (price == null || quantity == null || price <= 0 || quantity <= 0) {
@@ -234,6 +234,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
     final laborHours = double.tryParse(_laborHoursController.text.replaceAll(',', '.')) ?? 0.0;
     final laborCost = double.tryParse(_laborCostController.text.replaceAll(',', '.')) ?? 0.0;
     final totalCost = partsTotal + laborCost;
+
 
     final updatedService = _service.copyWith(
       status: ServiceStatus.finished,
@@ -482,7 +483,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                     border: OutlineInputBorder(),
                                   ),
                                   keyboardType: TextInputType.number,
-                                  inputFormatters: [_currencyMask],
+                                  inputFormatters: [RealInputFormatter()],
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -515,13 +516,13 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                 margin: const EdgeInsets.only(bottom: 8),
                                 child: ListTile(
                                   title: Text('${part.name} (${part.code})'),
-                                  subtitle: Text('${part.brand} - ${part.quantity}x R\$ ${part.price.toStringAsFixed(2)}'),
+                                  subtitle: Text('${part.brand} - ${part.quantity}x R\$ ${formatNumberBR(part.price)}'),
                                   trailing: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
-                                        'R\$ ${part.total.toStringAsFixed(2)}',
+                                        'R\$ ${formatNumberBR(part.total)}',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           color: Colors.green,
@@ -559,7 +560,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                     ),
                                   ),
                                   Text(
-                                    'R\$ ${partsTotal.toStringAsFixed(2)}',
+                                    'R\$ ${formatNumberBR(partsTotal)}',
                                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: Colors.green[700],
@@ -620,7 +621,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                     prefixIcon: Icon(Icons.attach_money),
                                   ),
                                   keyboardType: TextInputType.numberWithOptions(decimal: true),
-                                  inputFormatters: [_currencyMask],
+                                  inputFormatters: [RealInputFormatter()],
                                   onChanged: (value) {
                                     setState(() {});
                                   },
@@ -646,7 +647,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                   ),
                                 ),
                                 Text(
-                                  'R\$ ${laborCost.toStringAsFixed(2)}',
+                                  'R\$ ${formatNumberBR(laborCost)}',
                                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.blue[700],
@@ -683,7 +684,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                 style: Theme.of(context).textTheme.bodyLarge,
                               ),
                               Text(
-                                'R\$ ${partsTotal.toStringAsFixed(2)}',
+                                'R\$ ${formatNumberBR(partsTotal)}',
                                 style: Theme.of(context).textTheme.bodyLarge,
                               ),
                             ],
@@ -697,7 +698,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                 style: Theme.of(context).textTheme.bodyLarge,
                               ),
                               Text(
-                                'R\$ ${laborCost.toStringAsFixed(2)}',
+                                'R\$ ${formatNumberBR(laborCost)}',
                                 style: Theme.of(context).textTheme.bodyLarge,
                               ),
                             ],
@@ -713,7 +714,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                 ),
                               ),
                               Text(
-                                'R\$ ${totalCost.toStringAsFixed(2)}',
+                                'R\$ ${formatNumberBR(totalCost)}',
                                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.green[700],

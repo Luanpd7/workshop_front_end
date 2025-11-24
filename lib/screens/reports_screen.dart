@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../models/repart.dart';
 import '../services/report_service.dart';
+import '../util/format_number.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -178,11 +178,19 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
       return const Center(child: Text('Nenhum dado disponível'));
     }
 
-    // Dados mockados para demonstração (substitua com dados reais da API)
-    final totalPurchased = _partsReport!['totalPurchased'] ?? 0.0;
-    final totalSold = _partsReport!['totalSold'] ?? 0.0;
-    final profit = totalSold - totalPurchased;
-    final partsList = _partsReport!['parts'] as List? ?? [];
+    final summary = (_partsReport!['summary'] as Map?)?.cast<String, dynamic>();
+    final breakdown = (_partsReport!['costBreakdown'] as Map?)?.cast<String, dynamic>();
+
+    final totalPurchased = _parseDouble(summary?['totalPurchased'] ?? _partsReport!['totalPurchased']);
+    final totalSold = _parseDouble(summary?['totalSold'] ?? _partsReport!['totalSold']);
+    final profit = _parseDouble(summary?['totalProfit'], totalSold - totalPurchased);
+    final laborCost = _parseDouble(summary?['laborCost'] ?? breakdown?['labor']);
+    final totalPartsQuantity = _parseInt(summary?['totalPartsQuantity'] ?? _partsReport!['totalPartsQuantity']);
+    final totalServices = _parseInt(summary?['totalServices'] ?? _partsReport!['totalServices']);
+    final partsList = (_partsReport!['parts'] as List? ?? [])
+        .whereType<Map>()
+        .map((part) => part.cast<String, dynamic>())
+        .toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -205,21 +213,45 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                   const SizedBox(height: 16),
                   _SummaryRow(
                     label: 'Total Comprado',
-                    value: 'R\$ ${totalPurchased.toStringAsFixed(2)}',
+                    value: 'R\$ ${formatNumberBR(totalPurchased)}',
                     color: Colors.blue,
                   ),
                   const SizedBox(height: 8),
                   _SummaryRow(
                     label: 'Total Vendido',
-                    value: 'R\$ ${totalSold.toStringAsFixed(2)}',
+                    value: 'R\$ ${formatNumberBR(totalSold)}',
                     color: Colors.green,
                   ),
                   const SizedBox(height: 8),
                   _SummaryRow(
                     label: 'Lucro',
-                    value: 'R\$ ${profit.toStringAsFixed(2)}',
+                    value: 'R\$ ${formatNumberBR(profit)}',
                     color: profit >= 0 ? Colors.green : Colors.red,
                   ),
+                  if (laborCost > 0) ...[
+                    const SizedBox(height: 8),
+                    _SummaryRow(
+                      label: 'Custo de Mão de Obra',
+                      value: 'R\$ ${formatNumberBR(laborCost)}',
+                      color: Colors.indigo,
+                    ),
+                  ],
+                  if (totalPartsQuantity > 0) ...[
+                    const SizedBox(height: 8),
+                    _SummaryRow(
+                      label: 'Quantidade de Peças',
+                      value: '$totalPartsQuantity',
+                      color: Colors.deepPurple,
+                    ),
+                  ],
+                  if (totalServices > 0) ...[
+                    const SizedBox(height: 8),
+                    _SummaryRow(
+                      label: 'Serviços com Peças',
+                      value: '$totalServices',
+                      color: Colors.orange,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -260,10 +292,12 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                             ),
                           ),
                           leftTitles: AxisTitles(
+
                             sideTitles: SideTitles(
+                              reservedSize: 60,
                               showTitles: true,
                               getTitlesWidget: (value, meta) {
-                                return Text('R\$ ${value.toInt()}') ;
+                                return Text('R\$ ${formatNumberBR(value.toInt())}' , style: TextStyle(fontSize: 10),) ;
                               },
                             ),
                           ),
@@ -329,13 +363,13 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          'R\$ ${(part['total'] ?? 0.0).toStringAsFixed(2)}',
+                          'R\$ ${formatNumberBR((part['total'] ?? 0.0))}',
                           style: TextStyle(color: Colors.green[700]),
                         ),
                       ],
                     ),
                   ),
-                )),
+                ),),
           ],
         ],
       ),
@@ -380,16 +414,28 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
       return const Center(child: Text('Nenhum dado disponível'));
     }
 
-    // Dados mockados para demonstração (substitua com dados reais da API)
-    final totalServices = _servicesReport!['totalServices'] ?? 0;
-    final totalRevenue = _servicesReport!['totalRevenue'] ?? 0.0;
-    final servicesByStatus = _servicesReport!['servicesByStatus'] as Map? ?? {};
-    final servicesList = _servicesReport!['services'] as List? ?? [];
+    final summary = (_servicesReport!['summary'] as Map?)?.cast<String, dynamic>();
+    final totalServices = _parseInt(summary?['totalServices'] ?? _servicesReport!['totalServices']);
+    final totalRevenue = _parseDouble(summary?['totalRevenue'] ?? _servicesReport!['totalRevenue']);
+    final averageTicket = _parseDouble(summary?['averageTicket'] ?? _servicesReport!['averageTicket']);
 
-    final pending = servicesByStatus['pending'] ?? 0;
-    final inProgress = servicesByStatus['inProgress'] ?? 0;
-    final finished = servicesByStatus['finished'] ?? 0;
-    final washing = servicesByStatus['washing'] ?? 0;
+    final statusStatsRaw = (_servicesReport!['servicesByStatus'] as List? ?? [])
+        .whereType<Map>()
+        .map((stat) => stat.cast<String, dynamic>())
+        .toList();
+
+    final Map<String, int> statusCounts = {};
+    final Map<String, double> statusRevenue = {};
+    for (final stat in statusStatsRaw) {
+      final statusKey = stat['status']?.toString() ?? 'unknown';
+      statusCounts[statusKey] = _parseInt(stat['count']);
+      statusRevenue[statusKey] = _parseDouble(stat['revenue']);
+    }
+
+    final servicesList = (_servicesReport!['services'] as List? ?? [])
+        .whereType<Map>()
+        .map((service) => service.cast<String, dynamic>())
+        .toList();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -418,8 +464,14 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                   const SizedBox(height: 8),
                   _SummaryRow(
                     label: 'Receita Total',
-                    value: 'R\$ ${totalRevenue.toStringAsFixed(2)}',
+                    value: 'R\$ ${formatNumberBR(totalRevenue)}',
                     color: Colors.green,
+                  ),
+                  const SizedBox(height: 8),
+                  _SummaryRow(
+                    label: 'Ticket Médio',
+                    value: 'R\$ ${formatNumberBR(averageTicket)}',
+                    color: Colors.indigo,
                   ),
                 ],
               ),
@@ -428,65 +480,64 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
           const SizedBox(height: 16),
 
           // Gráfico de Status
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Serviços por Status',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 200,
-                    child: PieChart(
-                      PieChartData(
-                        sectionsSpace: 2,
-                        centerSpaceRadius: 40,
-                        sections: [
-                          if (pending > 0)
-                            PieChartSectionData(
-                              value: pending.toDouble(),
-                              title: 'Pendente\n$pending',
-                              color: Colors.orange,
-                              radius: 80,
-                            ),
-                          if (inProgress > 0)
-                            PieChartSectionData(
-                              value: inProgress.toDouble(),
-                              title: 'Em Andamento\n$inProgress',
-                              color: Colors.blue,
-                              radius: 80,
-                            ),
-                          if (finished > 0)
-                            PieChartSectionData(
-                              value: finished.toDouble(),
-                              title: 'Finalizado\n$finished',
-                              color: Colors.green,
-                              radius: 80,
-                            ),
-                          if (washing > 0)
-                            PieChartSectionData(
-                              value: washing.toDouble(),
-                              title: 'Lavagem\n$washing',
-                              color: Colors.cyan,
-                              radius: 80,
-                            ),
-                        ],
+          if (statusCounts.isNotEmpty)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Serviços por Status',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      height: 200,
+                      child: PieChart(
+                        PieChartData(
+                          sectionsSpace: 2,
+                          centerSpaceRadius: 40,
+                          sections: statusCounts.entries
+                              .where((entry) => entry.value > 0)
+                              .map((entry) {
+                            final status = entry.key;
+                            final count = entry.value;
+                            return PieChartSectionData(
+                              value: count.toDouble(),
+                              title: '${_getStatusLabel(status)}\n$count',
+                              color: _getStatusColor(status),
+                              radius: 80,
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ...statusStatsRaw.map((stat) {
+                      final status = stat['status']?.toString() ?? 'unknown';
+                      final count = _parseInt(stat['count']);
+                      final revenue = _parseDouble(stat['revenue']);
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          backgroundColor: _getStatusColor(status),
+                          child: Text(
+                            count.toString(),
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        title: Text(_getStatusLabel(status)),
+                        subtitle: Text('Receita: R\$ ${formatNumberBR(revenue)}'),
+                      );
+                    }),
+                  ],
+                ),
               ),
             ),
-          ),
           const SizedBox(height: 16),
-
-          // Lista de Serviços
           if (servicesList.isNotEmpty) ...[
             Text(
               'Serviços Realizados',
@@ -497,32 +548,138 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
             const SizedBox(height: 8),
             ...servicesList.take(20).map((service) => Card(
                   margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    title: Text('Serviço #${service['id'] ?? ''}'),
-                    subtitle: Text('Cliente: ${service['clientName'] ?? ''}'),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          service['status'] ?? '',
+                  child: Stack(
+                    children: [
+                      ListTile(
+                      title: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Serviço #${service['id'] ?? ''}'),
+                        ],
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Cliente: ${service['clientName'] ?? ''}'),
+                          if ((service['vehicleBrand'] ?? '').toString().isNotEmpty ||
+                              (service['vehicleModel'] ?? '').toString().isNotEmpty)
+                            Text(
+                              'Veículo: ${service['vehicleBrand'] ?? ''} ${service['vehicleModel'] ?? ''}',
+                              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                            ),
+                          if ((service['vehiclePlate'] ?? '').toString().isNotEmpty)
+                            Text(
+                              'Placa: ${service['vehiclePlate']}',
+                              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                            ),
+                          if ((service['startDate'] ?? '').toString().isNotEmpty ||
+                              (service['endDate'] ?? '').toString().isNotEmpty)
+                            Text(
+                              'Período: ${_formatDate(service['startDate'])} - ${_formatDate(service['endDate'])}',
+                              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                            ),
+                        ],
+                      ),
+
+                      trailing: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: 140,
+                          maxWidth: 180,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Total: R\$ ${formatNumberBR( _parseDouble(service['totalCost']))}',
+                              style: TextStyle(color: Colors.green[700]),
+                            ),
+                            if (_parseDouble(service['partsCost']) > 0)
+                              Text(
+                                'Peças: R\$ ${formatNumberBR( _parseDouble(service['partsCost']))}',
+                                style: TextStyle(color: Colors.blueGrey[600], fontSize: 12),
+                              ),
+                            if (_parseDouble(service['laborCost']) > 0)
+                              Text(
+                                'Mão de obra: R\$ ${formatNumberBR( _parseDouble(service['laborCost']))}',
+                                style: TextStyle(color: Colors.blueGrey[600], fontSize: 12),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                      Positioned(
+                        top: 5,
+                        right: 10,
+                        child: Text(
+                          _getStatusLabel(service['status']?.toString() ?? ''),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: _getStatusColor(service['status']),
+                            color: _getStatusColor(service['status']?.toString() ?? ''),
                           ),
                         ),
-                        Text(
-                          'R\$ ${(service['totalCost'] ?? 0.0).toStringAsFixed(2)}',
-                          style: TextStyle(color: Colors.green[700]),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ]
                   ),
-                )),
+                ),),
           ],
         ],
       ),
     );
+  }
+
+  double _parseDouble(dynamic value, [double fallback = 0.0]) {
+    if (value == null) return fallback;
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      final normalized = value.trim();
+      if (normalized.isEmpty) return fallback;
+      return double.tryParse(normalized.replaceAll(',', '.')) ?? fallback;
+    }
+    return fallback;
+  }
+
+  int _parseInt(dynamic value, [int fallback = 0]) {
+    if (value == null) return fallback;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) {
+      final normalized = value.trim();
+      if (normalized.isEmpty) return fallback;
+      return int.tryParse(normalized) ?? fallback;
+    }
+    return fallback;
+  }
+
+  String _getStatusLabel(String status) {
+    switch (status) {
+      case 'pending':
+        return 'Pendente';
+      case 'inProgress':
+        return 'Em Andamento';
+      case 'finished':
+        return 'Finalizado';
+      case 'washing':
+        return 'Lavagem/Polimento';
+      default:
+        return status.isEmpty ? 'Desconhecido' : status;
+    }
+  }
+
+  String _formatDate(dynamic value) {
+    if (value == null) return '--';
+    if (value is DateTime) {
+      return DateFormat('dd/MM/yyyy').format(value);
+    }
+    if (value is String && value.isNotEmpty) {
+      try {
+        final parsed = DateTime.parse(value);
+        return DateFormat('dd/MM/yyyy').format(parsed);
+      } catch (_) {
+        return value;
+      }
+    }
+    return '--';
   }
 
   Color _getStatusColor(String? status) {
@@ -572,6 +729,7 @@ class _SummaryRow extends StatelessWidget {
     );
   }
 }
+
 
 
 
