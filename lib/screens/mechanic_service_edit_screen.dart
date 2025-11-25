@@ -167,6 +167,26 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
     });
   }
 
+  void _addLaborCost() {
+
+
+    final laborCostValue = double.tryParse(_laborCostController.text.replaceAll('R\$', '')
+        .replaceAll('.', '')
+        .replaceAll(' ', '')
+        .replaceAll(',', '.'));
+
+
+
+    setState(() {
+
+
+  _laborCost = laborCostValue ?? 0;
+
+
+    });
+  }
+
+
   void _removePart(int index) {
     setState(() {
       _parts.removeAt(index);
@@ -232,8 +252,9 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
 
     final partsTotal = _parts.fold(0.0, (sum, part) => sum + part.total);
     final laborHours = double.tryParse(_laborHoursController.text.replaceAll(',', '.')) ?? 0.0;
-    final laborCost = double.tryParse(_laborCostController.text.replaceAll(',', '.')) ?? 0.0;
+    final laborCost = _laborCost;
     final totalCost = partsTotal + laborCost;
+
 
 
     final updatedService = _service.copyWith(
@@ -263,7 +284,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
   @override
   Widget build(BuildContext context) {
     final partsTotal = _parts.fold(0.0, (sum, part) => sum + part.total);
-    final laborCost = double.tryParse(_laborCostController.text.replaceAll(',', '.')) ?? 0.0;
+    final laborCost = _laborCost ?? 0.0;
     final totalCost = partsTotal + laborCost;
 
     return Scaffold(
@@ -597,7 +618,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                   controller: _laborHoursController,
                                   decoration: const InputDecoration(
                                     labelText: 'Horas Trabalhadas',
-                                    hintText: '0.00',
+                                    hintText: '0',
                                     border: OutlineInputBorder(),
                                     prefixIcon: Icon(Icons.access_time),
                                   ),
@@ -655,6 +676,11 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                 ),
                               ],
                             ),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: _addLaborCost,
+                            icon: const Icon(Icons.work),
+                            label: const Text('Adicionar Mão de obra'),
                           ),
                         ],
                       ),

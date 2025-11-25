@@ -103,6 +103,8 @@ class ServiceService {
 
   Future<Service> updateService(Service service) async {
     try {
+
+
       final response = await http.put(
         Uri.parse('$baseUrl/services/${service.id}'),
         headers: {'Content-Type': 'application/json'},

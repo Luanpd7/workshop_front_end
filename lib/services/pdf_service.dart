@@ -19,6 +19,9 @@ class PdfService {
     List<pw.MemoryImage> beforeImages = [];
     List<pw.MemoryImage> afterImages = [];
 
+
+
+
     for (var imagePath in service.beforeImages) {
       try {
         if (imagePath.startsWith('http') || imagePath.startsWith('https')) {
@@ -53,9 +56,11 @@ class PdfService {
     }
 
     // Calcular valores para o gráfico
-    final partsTotal = service.partsTotal;
+     final partsTotal = service.partsTotal;
     final laborCost = service.laborCost;
-    final totalCost = service.serviceTotal;
+     final totalCost = partsTotal + laborCost;
+
+
 
     pdf.addPage(
       pw.MultiPage(
@@ -361,6 +366,8 @@ class PdfService {
               child: pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
+    // TODO
+                  // PEÇAS
                   if (partsTotal > 0)
                     pw.Expanded(
                       child: pw.Column(
@@ -388,7 +395,8 @@ class PdfService {
                         ],
                       ),
                     ),
-                  if (partsTotal > 0 && laborCost > 0) pw.SizedBox(width: 8),
+
+                  // MÃO DE OBRA
                   if (laborCost > 0)
                     pw.Expanded(
                       child: pw.Column(
@@ -416,9 +424,9 @@ class PdfService {
                         ],
                       ),
                     ),
+
                 ],
-              ),
-            ),
+              ),),
             pw.SizedBox(height: 20),
           ],
 
