@@ -29,10 +29,6 @@ class _MechanicsScreenState extends State<MechanicsScreen> {
     super.dispose();
   }
 
-  void _onSearchChanged(String query) {
-    context.read<MechanicProvider>().searchMechanics(query);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,31 +36,6 @@ class _MechanicsScreenState extends State<MechanicsScreen> {
         padding: const EdgeInsets.only(top: 10.0),
         child: Column(
           children: [
-            // Barra de pesquisa
-            // Padding(
-            //   padding: const EdgeInsets.all(16.0),
-            //   child: TextField(
-            //     controller: _searchController,
-            //     decoration: InputDecoration(
-            //       hintText: 'Pesquisar mecânicos...',
-            //       prefixIcon: const Icon(Icons.search),
-            //       suffixIcon: _searchController.text.isNotEmpty
-            //           ? IconButton(
-            //               icon: const Icon(Icons.clear),
-            //               onPressed: () {
-            //                 _searchController.clear();
-            //                 _onSearchChanged('');
-            //               },
-            //             )
-            //           : null,
-            //       border: OutlineInputBorder(
-            //         borderRadius: BorderRadius.circular(12),
-            //       ),
-            //     ),
-            //     onChanged: _onSearchChanged,
-            //   ),
-            // ),
-            // Lista de mecânicos
             Expanded(
               child: Consumer<MechanicProvider>(
                 builder: (context, provider, child) {

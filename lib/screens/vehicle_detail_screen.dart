@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/vehicle_provider.dart';
 import '../providers/client_provider.dart';
 import '../models/vehicle.dart';
-import '../models/client.dart';
 import 'vehicle_form_screen.dart';
 
 class VehicleDetailScreen extends StatelessWidget {
@@ -64,14 +63,12 @@ class VehicleDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Card principal com informações
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Avatar e nome do veículo
                     Row(
                       children: [
                         CircleAvatar(
@@ -108,7 +105,6 @@ class VehicleDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
 
-                    // Informações do veículo
                     _InfoTile(
                       icon: Icons.branding_watermark,
                       title: 'Marca',
@@ -148,7 +144,6 @@ class VehicleDetailScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                     ],
 
-                    // Informações do cliente
                     Consumer<ClientProvider>(
                       builder: (context, clientProvider, child) {
                         final client = clientProvider.clients
@@ -208,7 +203,6 @@ class VehicleDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Botões de ação
             Row(
               children: [
                 Expanded(
@@ -240,7 +234,6 @@ class VehicleDetailScreen extends StatelessWidget {
               ],
             ),
 
-            // Mostrar erro se houver
             Consumer<VehicleProvider>(
               builder: (context, provider, child) {
                 if (provider.error != null) {

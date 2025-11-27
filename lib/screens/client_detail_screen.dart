@@ -65,7 +65,6 @@ class ClientDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Card principal com informações
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
@@ -114,7 +113,6 @@ class ClientDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
 
-                    // Informações de contato
                     _InfoTile(
                       icon: Icons.phone,
                       title: 'Telefone',
@@ -143,7 +141,6 @@ class ClientDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Seção de Veículos
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -205,7 +202,6 @@ class ClientDetailScreen extends StatelessWidget {
                           );
                         }
 
-                        // Carregar veículos do cliente se ainda não foram carregados
                         if (vehicleProvider.filterClientId != client.id) {
                           WidgetsBinding.instance.addPostFrameCallback((_) {
                             vehicleProvider.loadVehicles(clientId: client.id);
@@ -274,7 +270,6 @@ class ClientDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Botões de ação
             Row(
               children: [
                 Expanded(
@@ -306,7 +301,6 @@ class ClientDetailScreen extends StatelessWidget {
               ],
             ),
 
-            // Mostrar erro se houver
             Consumer<ClientProvider>(
               builder: (context, provider, child) {
                 if (provider.error != null) {

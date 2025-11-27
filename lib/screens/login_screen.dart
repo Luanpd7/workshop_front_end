@@ -41,7 +41,6 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo/Ícone
                   Icon(
                     Icons.build_circle,
                     size: 100,
@@ -49,7 +48,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 24),
                   
-                  // Título
                   Text(
                     'Sistema de Oficina',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
@@ -59,7 +57,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 48),
 
-                  // Card de Login
                   Card(
                     elevation: 8,
                     shape: RoundedRectangleBorder(
@@ -79,11 +76,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 32),
 
-                          // Botão Gerente
                           ElevatedButton.icon(
                             onPressed: () {
                               context.read<AuthProvider>().loginAsManager();
-                              // O AuthWrapper vai redirecionar automaticamente
                             },
                             icon: const Icon(Icons.person_outline, size: 28),
                             label: const Text(
@@ -114,7 +109,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Seleção de Mecânico
                           Text(
                             'Selecione um mecânico:',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -173,7 +167,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onChanged: (mechanic) {
                                   if (mechanic != null) {
                                     context.read<AuthProvider>().loginAsMechanic(mechanic.id!);
-                                    // O AuthWrapper vai redirecionar automaticamente
                                   }
                                 },
                               );

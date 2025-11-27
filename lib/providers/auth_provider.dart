@@ -7,7 +7,7 @@ enum UserRole {
 
 class AuthProvider with ChangeNotifier {
   UserRole? _currentRole;
-  int? _mechanicId; // ID do mecânico logado (se for mecânico)
+  int? _mechanicId;
 
   UserRole? get currentRole => _currentRole;
   int? get mechanicId => _mechanicId;

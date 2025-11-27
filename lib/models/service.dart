@@ -5,7 +5,7 @@ enum ServiceStatus {
   pending,
   inProgress,
   finished,
-  washing, // Lavagem/Polimento
+  washing,
 }
 
 class Service {
@@ -22,8 +22,8 @@ class Service {
   final List<String> afterImages;
   final String? audioRecord;
   final double totalCost;
-  final double laborCost; // Custo de mão de obra
-  final double laborHours; // Horas trabalhadas
+  final double laborCost;
+  final double laborHours;
   final ServiceStatus status;
 
   Service({
@@ -184,7 +184,6 @@ class Service {
     return partsTotal + laborCost;
   }
 
-  // Método para calcular o total automaticamente
   double calculateTotal() {
     return partsTotal + laborCost;
   }

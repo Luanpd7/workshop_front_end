@@ -15,7 +15,6 @@ class PdfService {
   }) async {
     final pdf = pw.Document();
 
-    // Carregar imagens antes e depois
     List<pw.MemoryImage> beforeImages = [];
     List<pw.MemoryImage> afterImages = [];
 
@@ -25,8 +24,6 @@ class PdfService {
     for (var imagePath in service.beforeImages) {
       try {
         if (imagePath.startsWith('http') || imagePath.startsWith('https')) {
-          // Se for URL, você precisaria baixar a imagem
-          // Por enquanto, vamos pular URLs
           continue;
         }
         final file = File(imagePath);
@@ -42,7 +39,6 @@ class PdfService {
     for (var imagePath in service.afterImages) {
       try {
         if (imagePath.startsWith('http') || imagePath.startsWith('https')) {
-          // Se for URL, você precisaria baixar a imagem
           continue;
         }
         final file = File(imagePath);
@@ -55,7 +51,6 @@ class PdfService {
       }
     }
 
-    // Calcular valores para o gráfico
      final partsTotal = service.partsTotal;
     final laborCost = service.laborCost;
      final totalCost = partsTotal + laborCost;
@@ -67,7 +62,6 @@ class PdfService {
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(40),
         build: (context) => [
-          // Cabeçalho
           pw.Header(
             level: 0,
             child: pw.Column(
@@ -90,7 +84,6 @@ class PdfService {
           ),
           pw.SizedBox(height: 30),
 
-          // Informações do Cliente e Veículo
           pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
@@ -134,7 +127,6 @@ class PdfService {
           ),
           pw.SizedBox(height: 20),
 
-          // Informações do Serviço
           pw.Container(
             padding: const pw.EdgeInsets.all(12),
             decoration: pw.BoxDecoration(
@@ -170,7 +162,6 @@ class PdfService {
           ),
           pw.SizedBox(height: 20),
 
-          // Fotos Antes e Depois
           if (beforeImages.isNotEmpty || afterImages.isNotEmpty) ...[
             pw.Text(
               'Fotos do Veículo',
@@ -232,7 +223,6 @@ class PdfService {
             pw.SizedBox(height: 30),
           ],
 
-          // Peças
           if (service.parts.isNotEmpty) ...[
             pw.Text(
               'Peças Utilizadas',
@@ -299,7 +289,6 @@ class PdfService {
             pw.SizedBox(height: 20),
           ],
 
-          // Resumo Financeiro
           pw.Container(
             padding: const pw.EdgeInsets.all(16),
             decoration: pw.BoxDecoration(
@@ -351,7 +340,6 @@ class PdfService {
           ),
           pw.SizedBox(height: 30),
 
-          // Gráfico de Custos (simulado com tabela)
           if (partsTotal > 0 || laborCost > 0) ...[
             pw.Text(
               'Divisão de Custos',
@@ -366,8 +354,6 @@ class PdfService {
               child: pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
-    // TODO
-                  // PEÇAS
                   if (partsTotal > 0)
                     pw.Expanded(
                       child: pw.Column(
@@ -396,7 +382,6 @@ class PdfService {
                       ),
                     ),
 
-                  // MÃO DE OBRA
                   if (laborCost > 0)
                     pw.Expanded(
                       child: pw.Column(
@@ -430,7 +415,6 @@ class PdfService {
             pw.SizedBox(height: 20),
           ],
 
-          // Observações
           if (service.notes.isNotEmpty) ...[
             pw.Text(
               'Observações',
@@ -472,7 +456,6 @@ class PdfService {
       ),
     );
 
-    // Imprimir ou compartilhar PDF
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
     );

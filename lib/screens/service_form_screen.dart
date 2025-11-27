@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart' hide ServiceStatus;
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/service_provider.dart';
 import '../providers/client_provider.dart';
@@ -104,20 +103,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
   }
 
 
-
-
-
-
-
-
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$minutes:$seconds';
-  }
-
   Future<void> _saveService() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedClient == null || _selectedMechanic == null || _selectedVehicle == null) {
@@ -146,7 +131,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
       
       if (context.mounted) {
         Navigator.pop(context);
-        // Recarregar a lista de serviços
         context.read<ServiceProvider>().loadServices();
       }
     }
@@ -186,7 +170,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Seleção de Cliente
               Consumer<ClientProvider>(
                 builder: (context, clientProvider, child) {
                   return DropdownButtonFormField<Client?>(
@@ -215,7 +198,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Seleção de Veículo (após selecionar cliente)
               if (_selectedClient != null)
                 Consumer<VehicleProvider>(
                   builder: (context, vehicleProvider, child) {
@@ -281,7 +263,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                 ),
               if (_selectedClient != null) const SizedBox(height: 16),
 
-              // Seleção de Mecânico
               Consumer<MechanicProvider>(
                 builder: (context, mechanicProvider, child) {
                   return DropdownButtonFormField<Mechanic>(
@@ -314,8 +295,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
               ),
               const SizedBox(height: 24),
 
-
-              // Fotos Antes
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -404,7 +383,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Informação sobre o status
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -427,7 +405,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Botão Salvar
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -440,7 +417,6 @@ class _ServiceFormScreenState extends State<ServiceFormScreen> {
                 ),
               ),
 
-              // Mostrar erro se houver
               Consumer<ServiceProvider>(
                 builder: (context, provider, child) {
                   if (provider.error != null) {

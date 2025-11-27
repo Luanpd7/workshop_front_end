@@ -39,7 +39,6 @@ class _MechanicFormScreenState extends State<MechanicFormScreen> {
     super.dispose();
   }
 
-  // Mascara dinâmica para telefone brasileiro (10 ou 11 dígitos)
   final _phoneMask = MaskTextInputFormatter(
     mask: '(##) #####-####',
     filter: { '#': RegExp(r'[0-9]') },
@@ -102,7 +101,6 @@ class _MechanicFormScreenState extends State<MechanicFormScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              // Campo Nome
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
@@ -124,7 +122,6 @@ class _MechanicFormScreenState extends State<MechanicFormScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Campo Telefone
               TextFormField(
                 controller: _phoneController,
                 decoration: const InputDecoration(
@@ -147,7 +144,6 @@ class _MechanicFormScreenState extends State<MechanicFormScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Campo Email
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
@@ -169,7 +165,6 @@ class _MechanicFormScreenState extends State<MechanicFormScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Botão Salvar
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -182,7 +177,6 @@ class _MechanicFormScreenState extends State<MechanicFormScreen> {
                 ),
               ),
 
-              // Mostrar erro se houver
               Consumer<MechanicProvider>(
                 builder: (context, provider, child) {
                   if (provider.error != null) {

@@ -35,20 +35,10 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
     super.dispose();
   }
 
-  void _onSearchChanged(String query) {
-    context.read<ServiceProvider>().searchServices(query);
-  }
-
   List<Service> get _myServices {
     final mechanicId = context.read<AuthProvider>().mechanicId;
 
-
     if (mechanicId == null) return [];
-
-
-
-
-
     return context.read<ServiceProvider>().services
         .where((service)  {
       return service.mechanicId == mechanicId;
@@ -71,7 +61,6 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
             icon: const Icon(Icons.logout),
             onPressed: () {
               context.read<AuthProvider>().logout();
-              // O AuthWrapper vai redirecionar automaticamente
             },
             tooltip: localizations.logout,
           ),
@@ -133,32 +122,6 @@ class _MechanicHomeScreenState extends State<MechanicHomeScreen> {
         padding: const EdgeInsets.only(top: 10.0),
         child: Column(
           children: [
-            // Barra de pesquisa
-            // Padding(
-            //   padding: const EdgeInsets.all(16.0),
-            //   child: TextField(
-            //     controller: _searchController,
-            //     decoration: InputDecoration(
-            //       hintText: localizations.searchServices,
-            //       prefixIcon: const Icon(Icons.search),
-            //       suffixIcon: _searchController.text.isNotEmpty
-            //           ? IconButton(
-            //               icon: const Icon(Icons.clear),
-            //               onPressed: () {
-            //                 _searchController.clear();
-            //                 _onSearchChanged('');
-            //               },
-            //             )
-            //           : null,
-            //       border: OutlineInputBorder(
-            //         borderRadius: BorderRadius.circular(12),
-            //       ),
-            //     ),
-            //     onChanged: _onSearchChanged,
-            //   ),
-            // ),
-
-            // Lista de serviços
             Expanded(
               child: Consumer<ServiceProvider>(
                 builder: (context, provider, child) {

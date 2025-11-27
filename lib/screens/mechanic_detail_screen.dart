@@ -62,7 +62,6 @@ class MechanicDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Card principal com informações
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
@@ -111,7 +110,6 @@ class MechanicDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
 
-                    // Informações de contato
                     _InfoTile(
                       icon: Icons.phone,
                       title: 'Telefone',
@@ -140,7 +138,6 @@ class MechanicDetailScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Botões de ação
             Row(
               children: [
                 Expanded(
@@ -172,7 +169,6 @@ class MechanicDetailScreen extends StatelessWidget {
               ],
             ),
 
-            // Mostrar erro se houver
             Consumer<MechanicProvider>(
               builder: (context, provider, child) {
                 if (provider.error != null) {

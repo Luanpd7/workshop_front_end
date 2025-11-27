@@ -24,7 +24,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
   final _colorController = TextEditingController();
   final _plateController = TextEditingController();
 
-  // Mascara padrão placa (formato antigo): ABC-1234
   final _plateMask = MaskTextInputFormatter(
     mask: 'AAA-####',
     filter: {
@@ -121,7 +120,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
           child: SingleChildScrollView(
             child: Column(
               children: [
-                // Seleção de Cliente
                 if (!isEditing) ...[
                   Consumer<ClientProvider>(
                     builder: (context, clientProvider, child) {
@@ -155,7 +153,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                   const SizedBox(height: 16),
                 ],
 
-                // Campo Marca
                 TextFormField(
                   controller: _brandController,
                   decoration: const InputDecoration(
@@ -177,7 +174,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Campo Modelo
                 TextFormField(
                   controller: _modelController,
                   decoration: const InputDecoration(
@@ -199,7 +195,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Campo Ano
                 TextFormField(
                   controller: _yearController,
                   decoration: const InputDecoration(
@@ -226,7 +221,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Campo Cor
                 TextFormField(
                   controller: _colorController,
                   decoration: const InputDecoration(
@@ -239,7 +233,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Campo Placa
                 TextFormField(
                   controller: _plateController,
                   decoration: const InputDecoration(
@@ -262,7 +255,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Botão Salvar
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
@@ -275,7 +267,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                   ),
                 ),
 
-                // Mostrar erro se houver
                 Consumer<VehicleProvider>(
                   builder: (context, provider, child) {
                     if (provider.error != null) {

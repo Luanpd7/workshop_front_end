@@ -36,10 +36,6 @@ class _ServicesScreenState extends State<ServicesScreen> {
     super.dispose();
   }
 
-  void _onSearchChanged(String query) {
-    context.read<ServiceProvider>().searchServices(query);
-  }
-
   void _onStatusFilterChanged(String? status) {
     setState(() {
       _selectedStatus = status;
@@ -76,33 +72,7 @@ class _ServicesScreenState extends State<ServicesScreen> {
         padding: const EdgeInsets.only(top: 10.0),
         child: Column(
           children: [
-            // Barra de pesquisa
-            // Padding(
-            //   padding: const EdgeInsets.all(16.0),
-            //   child: TextField(
-            //     controller: _searchController,
-            //     decoration: InputDecoration(
-            //       hintText: 'Pesquisar serviços...',
-            //       prefixIcon: const Icon(Icons.search),
-            //       suffixIcon: _searchController.text.isNotEmpty
-            //           ? IconButton(
-            //               icon: const Icon(Icons.clear),
-            //               onPressed: () {
-            //                 _searchController.clear();
-            //                 _onSearchChanged('');
-            //               },
-            //             )
-            //           : null,
-            //       border: OutlineInputBorder(
-            //         borderRadius: BorderRadius.circular(12),
-            //       ),
-            //     ),
-            //     onChanged: _onSearchChanged,
-            //   ),
-            // ),
-            // Filtros de status
             if (widget.client == null) _buildStatusFilter(),
-            // Lista de serviços
             Expanded(
               child: Consumer<ServiceProvider>(
                 builder: (context, provider, child) {

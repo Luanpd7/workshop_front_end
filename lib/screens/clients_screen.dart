@@ -29,8 +29,8 @@ class _ClientsScreenState extends State<ClientsScreen> with SingleTickerProvider
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       context.read<ClientProvider>().loadClients();
       context.read<MechanicProvider>().loadMechanics();
-      final VehicleService _vehicleService = VehicleService();
-      await _vehicleService.testarConexao();
+      final  vehicleService = VehicleService();
+      await vehicleService.testarConexao();
     });
   }
 
@@ -40,14 +40,6 @@ class _ClientsScreenState extends State<ClientsScreen> with SingleTickerProvider
     _clientSearchController.dispose();
     _mechanicSearchController.dispose();
     super.dispose();
-  }
-
-  void _onClientSearchChanged(String query) {
-    context.read<ClientProvider>().searchClients(query);
-  }
-
-  void _onMechanicSearchChanged(String query) {
-    context.read<MechanicProvider>().searchMechanics(query);
   }
 
   @override

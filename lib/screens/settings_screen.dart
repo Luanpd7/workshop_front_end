@@ -19,7 +19,6 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          // Seção de Idioma
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -61,7 +60,6 @@ class SettingsScreen extends StatelessWidget {
           
           const SizedBox(height: 16),
           
-          // Seção de Tema
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),

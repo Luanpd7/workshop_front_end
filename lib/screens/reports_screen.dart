@@ -102,7 +102,6 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
       ),
       body: Column(
         children: [
-          // Seletor de Data
           Container(
             padding: const EdgeInsets.all(16),
             color: Theme.of(context).colorScheme.surface,
@@ -125,7 +124,6 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
             ),
           ),
 
-          // Conteúdo das Abas
           Expanded(
             child: TabBarView(
               controller: _tabController,
@@ -197,7 +195,6 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Resumo
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -258,7 +255,6 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
           ),
           const SizedBox(height: 16),
 
-          // Gráfico
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -340,7 +336,6 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
           ),
           const SizedBox(height: 16),
 
-          // Lista de Peças
           if (partsList.isNotEmpty) ...[
             Text(
               'Peças Mais Vendidas',
@@ -442,7 +437,6 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Resumo
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -479,7 +473,6 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
           ),
           const SizedBox(height: 16),
 
-          // Gráfico de Status
           if (statusCounts.isNotEmpty)
             Card(
               child: Padding(

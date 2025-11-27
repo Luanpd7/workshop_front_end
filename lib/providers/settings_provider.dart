@@ -77,7 +77,6 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     
-    // Carregar idioma
     final languageValue = prefs.getString(_languageKey);
     if (languageValue != null) {
       _currentLanguage = AppLanguage.values.firstWhere(
@@ -86,7 +85,6 @@ class SettingsProvider extends ChangeNotifier {
       );
     }
 
-    // Carregar tema
     final themeValue = prefs.getString(_themeKey);
     if (themeValue != null) {
       _currentTheme = AppThemeMode.values.firstWhere(

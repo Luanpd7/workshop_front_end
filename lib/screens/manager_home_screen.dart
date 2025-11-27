@@ -38,7 +38,6 @@ class _ManagerHomeScreenState extends State<ManagerHomeScreen> {
             icon: const Icon(Icons.logout),
             onPressed: () {
               context.read<AuthProvider>().logout();
-              // O AuthWrapper vai redirecionar automaticamente
             },
             tooltip: localizations.logout,
           ),

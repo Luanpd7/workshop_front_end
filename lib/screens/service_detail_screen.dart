@@ -65,33 +65,26 @@ class ServiceDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Status do Serviço
                 _buildStatusCard(context),
                 const SizedBox(height: 16),
 
-                // Informações do Cliente
                 _buildClientCard(context),
                 const SizedBox(height: 16),
 
-                // Informações do Mecânico
                 _buildMechanicCard(context),
                 const SizedBox(height: 16),
 
-                // Informações do Serviço
                 _buildServiceInfoCard(context),
                 const SizedBox(height: 16),
 
-                // Fotos Antes e Depois
                 if (service.beforeImages.isNotEmpty || service.afterImages.isNotEmpty)
                   _buildPhotosCard(context),
                 const SizedBox(height: 16),
 
-                // Peças e Custos
                 if (service.parts.isNotEmpty || service.laborCost > 0)
                   _buildCostsCard(context),
                 const SizedBox(height: 16),
 
-                // Botão para gerar PDF
                 if (service.status == ServiceStatus.finished)
                   SizedBox(
                     width: double.infinity,

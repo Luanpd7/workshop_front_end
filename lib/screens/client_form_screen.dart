@@ -19,7 +19,6 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
 
-  // Mascara dinâmica para telefone brasileiro (10 ou 11 dígitos)
   final _phoneMask = MaskTextInputFormatter(
     mask: '(##) #####-####',
     filter: { '#': RegExp(r'[0-9]') },

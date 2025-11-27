@@ -7,9 +7,10 @@ import '../models/note.dart';
 import '../models/part.dart';
 import '../providers/service_provider.dart';
 import 'package:flutter/services.dart';
-import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import '../util/format_number.dart';
 import 'package:intl/intl.dart';
+
+enum _PartDialogMode { existing, newPart }
 
 class MechanicServiceEditScreen extends StatefulWidget {
   final Service service;
@@ -36,10 +37,12 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
   late Service _service;
   List<Note> _notes = [];
   List<Part> _parts = [];
+  List<Part> _availableParts = [];
   List<String> _afterImages = [];
   ServiceStatus? _selectedStatus;
   double _laborHours = 0.0;
   double _laborCost = 0.0;
+  double _hourlyRate = 0.0;
 
   bool get _canEdit => _service.status != ServiceStatus.finished;
   bool get _canFinalize => _service.status != ServiceStatus.finished && _afterImages.isNotEmpty;
@@ -54,8 +57,15 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
     _selectedStatus = _service.status;
     _laborHours = _service.laborHours;
     _laborCost = _service.laborCost;
+    _hourlyRate = (_laborHours > 0 && _laborCost > 0)
+        ? _laborCost / _laborHours
+        : 0.0;
     _laborHoursController.text = _laborHours.toStringAsFixed(2);
-    _laborCostController.text = _laborCost.toStringAsFixed(2);
+    _laborCostController.text =
+        _hourlyRate > 0 ? _hourlyRate.toStringAsFixed(2) : '';
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshAvailableParts();
+    });
   }
 
   @override
@@ -119,7 +129,228 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
     });
   }
 
-  void _addPart() {
+  void _refreshAvailableParts() {
+    final services = context.read<ServiceProvider>().services;
+    final Map<String, Part> uniqueParts = {};
+    for (final service in services) {
+      for (final part in service.parts) {
+        final key = part.code.toLowerCase();
+        uniqueParts[key] = part;
+      }
+    }
+    setState(() {
+      _availableParts = uniqueParts.values.toList()
+        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    });
+  }
+
+  void _resetPartForm() {
+    _partCodeController.clear();
+    _partNameController.clear();
+    _partBrandController.clear();
+    _partPriceController.clear();
+    _partQuantityController.text = '1';
+  }
+
+  void _prefillPartForm(Part part) {
+    _partCodeController.text = part.code;
+    _partNameController.text = part.name;
+    _partBrandController.text = part.brand;
+    final formattedPrice = NumberFormat.currency(
+      locale: 'pt_BR',
+      symbol: 'R\$ ',
+    ).format(part.price);
+    _partPriceController.value = TextEditingValue(
+      text: formattedPrice,
+      selection: TextSelection.collapsed(offset: formattedPrice.length),
+    );
+    if (_partQuantityController.text.isEmpty) {
+      _partQuantityController.text = '1';
+    }
+  }
+
+  void _updateLaborCost() {
+    final hours = double.tryParse(
+          _laborHoursController.text.replaceAll(',', '.'),
+        ) ??
+        0.0;
+
+    final hourlyRate = double.tryParse(
+          _laborCostController.text
+              .replaceAll('R\$', '')
+              .replaceAll('.', '')
+              .replaceAll(' ', '')
+              .replaceAll(',', '.'),
+        ) ??
+        0.0;
+
+    setState(() {
+      _laborHours = hours;
+      _hourlyRate = hourlyRate;
+      _laborCost = hours * hourlyRate;
+    });
+  }
+
+  void _showAddPartDialog() {
+    _refreshAvailableParts();
+    _resetPartForm();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        Part? selectedCatalogPart = _availableParts.isNotEmpty ? _availableParts.first : null;
+        if (selectedCatalogPart != null) {
+          _prefillPartForm(selectedCatalogPart);
+        }
+        _PartDialogMode mode = selectedCatalogPart != null ? _PartDialogMode.existing : _PartDialogMode.newPart;
+
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            void selectCatalogPart(Part? part) {
+              selectedCatalogPart = part;
+              if (part != null) {
+                _prefillPartForm(part);
+              }
+              setStateDialog(() {});
+            }
+
+            final bool hasCatalog = _availableParts.isNotEmpty;
+
+            return AlertDialog(
+              title: const Text('Adicionar peça'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (hasCatalog)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ChoiceChip(
+                              label: const Text('Existente'),
+                              selected: mode == _PartDialogMode.existing,
+                              onSelected: (selected) {
+                                if (!hasCatalog) return;
+                                if (selected) {
+                                  setStateDialog(() {
+                                    mode = _PartDialogMode.existing;
+                                    if (selectedCatalogPart == null && _availableParts.isNotEmpty) {
+                                      selectedCatalogPart = _availableParts.first;
+                                      _prefillPartForm(selectedCatalogPart!);
+                                    }
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ChoiceChip(
+                              label: const Text('Nova Peça'),
+                              selected: mode == _PartDialogMode.newPart,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setStateDialog(() {
+                                    mode = _PartDialogMode.newPart;
+                                    _resetPartForm();
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    if (hasCatalog) const SizedBox(height: 16),
+                    if (mode == _PartDialogMode.existing && hasCatalog) ...[
+                      DropdownButtonFormField<Part>(
+                        value: selectedCatalogPart,
+                        decoration: const InputDecoration(
+                          labelText: 'Selecione uma peça',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: _availableParts.map((part) {
+                          return DropdownMenuItem<Part>(
+                            value: part,
+                            child: Text('${part.name} (${part.code})'),
+                          );
+                        }).toList(),
+                        onChanged: selectCatalogPart,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    TextField(
+                      controller: _partCodeController,
+                      readOnly: mode == _PartDialogMode.existing,
+                      decoration: const InputDecoration(
+                        labelText: 'Código',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _partNameController,
+                      readOnly: mode == _PartDialogMode.existing,
+                      decoration: const InputDecoration(
+                        labelText: 'Nome',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _partBrandController,
+                      readOnly: mode == _PartDialogMode.existing,
+                      decoration: const InputDecoration(
+                        labelText: 'Marca (opcional)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _partPriceController,
+                      decoration: const InputDecoration(
+                        labelText: 'Preço',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [RealInputFormatter()],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _partQuantityController,
+                      decoration: const InputDecoration(
+                        labelText: 'Quantidade',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    final added = _addPart();
+                    if (added) {
+                      Navigator.of(dialogContext).pop();
+                    }
+                  },
+                  icon: const Icon(Icons.check),
+                  label: const Text('Adicionar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  bool _addPart() {
     if (_partCodeController.text.trim().isEmpty ||
         _partNameController.text.trim().isEmpty ||
         _partPriceController.text.trim().isEmpty ||
@@ -130,7 +361,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
           backgroundColor: Colors.orange,
         ),
       );
-      return;
+      return false;
     }
 
     final price = double.tryParse(_partPriceController.text.replaceAll('R\$', '')
@@ -146,12 +377,25 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
           backgroundColor: Colors.red,
         ),
       );
-      return;
+      return false;
+    }
+
+    final newCode = _partCodeController.text.trim();
+    final exists = _parts.any((part) => part.code.toLowerCase() == newCode.toLowerCase());
+
+    if (exists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Esta peça já foi adicionada ao serviço'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return false;
     }
 
     setState(() {
       _parts.add(Part(
-        code: _partCodeController.text.trim(),
+        code: newCode,
         name: _partNameController.text.trim(),
         brand: _partBrandController.text.trim().isEmpty ? 'Sem marca' : _partBrandController.text.trim(),
         price: price,
@@ -159,31 +403,10 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
         total: price * quantity,
       ));
 
-      _partCodeController.clear();
-      _partNameController.clear();
-      _partBrandController.clear();
-      _partPriceController.clear();
-      _partQuantityController.clear();
+      _resetPartForm();
     });
-  }
 
-  void _addLaborCost() {
-
-
-    final laborCostValue = double.tryParse(_laborCostController.text.replaceAll('R\$', '')
-        .replaceAll('.', '')
-        .replaceAll(' ', '')
-        .replaceAll(',', '.'));
-
-
-
-    setState(() {
-
-
-  _laborCost = laborCostValue ?? 0;
-
-
-    });
+    return true;
   }
 
 
@@ -210,9 +433,11 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
       return;
     }
 
+    _updateLaborCost();
+
     final partsTotal = _parts.fold(0.0, (sum, part) => sum + part.total);
-    final laborHours = double.tryParse(_laborHoursController.text.replaceAll(',', '.')) ?? 0.0;
-    final laborCost = double.tryParse(_laborCostController.text.replaceAll(',', '.')) ?? 0.0;
+    final laborHours = _laborHours;
+    final laborCost = _laborCost;
     final totalCost = partsTotal + laborCost;
 
     final updatedService = _service.copyWith(
@@ -250,8 +475,10 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
       return;
     }
 
+    _updateLaborCost();
+
     final partsTotal = _parts.fold(0.0, (sum, part) => sum + part.total);
-    final laborHours = double.tryParse(_laborHoursController.text.replaceAll(',', '.')) ?? 0.0;
+    final laborHours = _laborHours;
     final laborCost = _laborCost;
     final totalCost = partsTotal + laborCost;
 
@@ -284,7 +511,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
   @override
   Widget build(BuildContext context) {
     final partsTotal = _parts.fold(0.0, (sum, part) => sum + part.total);
-    final laborCost = _laborCost ?? 0.0;
+    final laborCost = _laborCost;
     final totalCost = partsTotal + laborCost;
 
     return Scaffold(
@@ -391,7 +618,6 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Observações
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -445,7 +671,6 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Peças/Itens
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -459,71 +684,13 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _partCodeController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Código',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                flex: 2,
-                                child: TextField(
-                                  controller: _partNameController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Nome',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                ),
-                              ),
-                            ],
+                          Text(
+                            'Selecione uma peça existente ou cadastre uma nova utilizando o botão abaixo.',
+                            style: Theme.of(context).textTheme.bodySmall,
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _partBrandController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Marca (opcional)',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextField(
-                                  controller: _partPriceController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Preço',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                  inputFormatters: [RealInputFormatter()],
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextField(
-                                  controller: _partQuantityController,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Quantidade',
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 12),
                           ElevatedButton.icon(
-                            onPressed: _addPart,
+                            onPressed: _showAddPartDialog,
                             icon: const Icon(Icons.add),
                             label: const Text('Adicionar Peça'),
                           ),
@@ -597,7 +764,6 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Mão de Obra
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -623,11 +789,8 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                     prefixIcon: Icon(Icons.access_time),
                                   ),
                                   keyboardType: TextInputType.numberWithOptions(decimal: true),
-                                  inputFormatters: [
-                                    FilteringTextInputFormatter.allow(RegExp(r'[0-9\\.,]')),
-                                  ],
                                   onChanged: (value) {
-                                    setState(() {});
+                                    _updateLaborCost();
                                   },
                                 ),
                               ),
@@ -636,7 +799,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                 child: TextField(
                                   controller: _laborCostController,
                                   decoration: const InputDecoration(
-                                    labelText: 'Custo de Mão de Obra (R\$)',
+                                    labelText: 'Valor por Hora (R\$)',
                                     hintText: '0.00',
                                     border: OutlineInputBorder(),
                                     prefixIcon: Icon(Icons.attach_money),
@@ -644,7 +807,7 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                                   keyboardType: TextInputType.numberWithOptions(decimal: true),
                                   inputFormatters: [RealInputFormatter()],
                                   onChanged: (value) {
-                                    setState(() {});
+                                    _updateLaborCost();
                                   },
                                 ),
                               ),
@@ -677,18 +840,11 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                               ],
                             ),
                           ),
-                          ElevatedButton.icon(
-                            onPressed: _addLaborCost,
-                            icon: const Icon(Icons.work),
-                            label: const Text('Adicionar Mão de obra'),
-                          ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Resumo Total
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -753,8 +909,6 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Fotos
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
@@ -866,7 +1020,6 @@ class _MechanicServiceEditScreenState extends State<MechanicServiceEditScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Botão Finalizar
                   if (_selectedStatus != ServiceStatus.finished)
                     ElevatedButton.icon(
                       onPressed: _canFinalize ? _finalizeService : null,
