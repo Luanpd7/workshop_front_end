@@ -4,7 +4,7 @@ Este repositório contém o desenvolvimento completo de uma solução mobile e b
 O objetivo da aplicação é substituir a ficha física utilizada no processo de atendimento e manutenção, trazendo mais organização, segurança dos dados e profissionalismo na entrega final ao cliente.
 
 Observação:
-O projeto foi desenvolvido integralmente por mim, porém, devido a um trabalho realizado em colaboração durante a fase acadêmica, alguns commits ou registros podem aparecer com o nome de um colega.
+O projeto foi desenvolvido integralmente por mim, porém, devido a um trabalho realizado em colaboração durante a fase acadêmica, alguns commits ou registros podem aparecer com o nome do Gabriel.
 
 ## 🚀 Tecnologias Utilizadas
 Frontend – Aplicativo Flutter
