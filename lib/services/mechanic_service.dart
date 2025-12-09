@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/mechanic.dart';
 
 class MechanicService {
-  static const String baseUrl = 'http://10.0.150.220:8080/api';
+  static const String baseUrl = 'http://192.168.1.3:8080/api';
 
   Future<List<Mechanic>> getAllMechanics() async {
     try {

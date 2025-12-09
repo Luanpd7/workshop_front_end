@@ -1,20 +1,27 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../models/service.dart';
 import '../models/client.dart';
 import '../models/mechanic.dart';
 import '../models/vehicle.dart';
+
 import '../providers/client_provider.dart';
 import '../providers/mechanic_provider.dart';
 import '../providers/vehicle_provider.dart';
+
 import '../services/pdf_service.dart';
 import '../util/format_number.dart';
 
 class ServiceDetailScreen extends StatelessWidget {
   final Service service;
 
-  const ServiceDetailScreen({super.key, required this.service});
+  const ServiceDetailScreen({
+    super.key,
+    required this.service,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,14 +32,16 @@ class ServiceDetailScreen extends StatelessWidget {
         actions: [
           if (service.status == ServiceStatus.finished)
             IconButton(
+              tooltip: 'Gerar Comprovante PDF',
               icon: const Icon(Icons.picture_as_pdf),
               onPressed: () => _generatePdf(context),
-              tooltip: 'Gerar Comprovante PDF',
             ),
         ],
       ),
+
       body: FutureBuilder<void>(
         future: _loadRelatedData(context),
+
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -45,10 +54,8 @@ class ServiceDetailScreen extends StatelessWidget {
                 children: [
                   Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
                   const SizedBox(height: 16),
-                  Text(
-                    'Erro ao carregar dados',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
+                  Text('Erro ao carregar dados',
+                      style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 8),
                   Text(
                     snapshot.error.toString(),
@@ -62,6 +69,7 @@ class ServiceDetailScreen extends StatelessWidget {
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
+
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -77,26 +85,29 @@ class ServiceDetailScreen extends StatelessWidget {
                 _buildServiceInfoCard(context),
                 const SizedBox(height: 16),
 
-                if (service.beforeImages.isNotEmpty || service.afterImages.isNotEmpty)
+                if (service.beforeImages.isNotEmpty ||
+                    service.afterImages.isNotEmpty)
                   _buildPhotosCard(context),
+
                 const SizedBox(height: 16),
 
                 if (service.parts.isNotEmpty || service.laborCost > 0)
                   _buildCostsCard(context),
+
                 const SizedBox(height: 16),
 
                 if (service.status == ServiceStatus.finished)
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () => _generatePdf(context),
                       icon: const Icon(Icons.picture_as_pdf),
                       label: const Text('Gerar Comprovante PDF'),
                       style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: Colors.red,
                         foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
+                      onPressed: () => _generatePdf(context),
                     ),
                   ),
               ],
@@ -107,13 +118,15 @@ class ServiceDetailScreen extends StatelessWidget {
     );
   }
 
+
   void _generatePdf(BuildContext context) {
     final clientProvider = context.read<ClientProvider>();
     final vehicleProvider = context.read<VehicleProvider>();
-    
+
     try {
       final client = clientProvider.clients
           .firstWhere((c) => c.id == service.clientId);
+
       final vehicle = vehicleProvider.vehicles
           .firstWhere((v) => v.id == service.vehicleId);
 
@@ -141,16 +154,21 @@ class ServiceDetailScreen extends StatelessWidget {
     }
   }
 
+
+
   Widget _buildPhotosCard(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+
           children: [
             Row(
               children: [
-                Icon(Icons.photo_library, color: Theme.of(context).colorScheme.primary),
+                Icon(Icons.photo_library,
+                    color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Fotos do Veículo',
@@ -160,8 +178,10 @@ class ServiceDetailScreen extends StatelessWidget {
                 ),
               ],
             ),
+
             const Divider(),
             const SizedBox(height: 16),
+
             if (service.beforeImages.isNotEmpty) ...[
               Text(
                 'ANTES',
@@ -171,44 +191,10 @@ class ServiceDetailScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              SizedBox(
-                height: 150,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: service.beforeImages.length,
-                  itemBuilder: (context, index) {
-                    final imagePath = service.beforeImages[index];
-                    return Container(
-                      width: 200,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: imagePath.startsWith('http') || imagePath.startsWith('https')
-                            ? Image.network(
-                                imagePath,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Icon(Icons.error);
-                                },
-                              )
-                            : Image.file(
-                                File(imagePath),
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Icon(Icons.error);
-                                },
-                              ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+              _buildImageList(service.beforeImages),
               const SizedBox(height: 16),
             ],
+
             if (service.afterImages.isNotEmpty) ...[
               Text(
                 'DEPOIS',
@@ -218,42 +204,7 @@ class ServiceDetailScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              SizedBox(
-                height: 150,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: service.afterImages.length,
-                  itemBuilder: (context, index) {
-                    final imagePath = service.afterImages[index];
-                    return Container(
-                      width: 200,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: imagePath.startsWith('http') || imagePath.startsWith('https')
-                            ? Image.network(
-                                imagePath,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Icon(Icons.error);
-                                },
-                              )
-                            : Image.file(
-                                File(imagePath),
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Icon(Icons.error);
-                                },
-                              ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+              _buildImageList(service.afterImages),
             ],
           ],
         ),
@@ -261,20 +212,62 @@ class ServiceDetailScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildImageList(List<String> images) {
+    return SizedBox(
+      height: 150,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: images.length,
+
+        itemBuilder: (context, index) {
+          final imagePath = images[index];
+
+          return Container(
+            width: 200,
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.grey),
+              borderRadius: BorderRadius.circular(8),
+            ),
+
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+
+              child: imagePath.startsWith('http')
+                  ? Image.network(
+                imagePath,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Icon(Icons.error),
+              )
+                  : Image.file(
+                File(imagePath),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const Icon(Icons.error),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+
   Widget _buildCostsCard(BuildContext context) {
     final partsTotal = service.partsTotal;
-    final laborCost = service.laborCost;
     final totalCost = service.serviceTotal;
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+
           children: [
             Row(
               children: [
-                Icon(Icons.attach_money, color: Theme.of(context).colorScheme.secondary),
+                Icon(Icons.attach_money,
+                    color: Theme.of(context).colorScheme.secondary),
                 const SizedBox(width: 8),
                 Text(
                   'Custos e Peças',
@@ -284,6 +277,7 @@ class ServiceDetailScreen extends StatelessWidget {
                 ),
               ],
             ),
+
             const Divider(),
             const SizedBox(height: 8),
             if (service.parts.isNotEmpty) ...[
@@ -294,31 +288,46 @@ class ServiceDetailScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
-              ...service.parts.map((part) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text('${part.name} (${part.quantity}x)'),
-                        ),
-                        Text('R\$ ${formatNumberBR(part.total)}'),
-                      ],
-                    ),
-                  )),
+
+              ...service.parts.map(
+                    (part) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                    children: [
+                      Expanded(
+                        child: Text('${part.name} (${part.quantity}x)'),
+                      ),
+                      Text('R\$ ${formatNumberBR(part.total)}'),
+                    ],
+                  ),
+                ),
+              ),
+
               const SizedBox(height: 8),
-              _InfoRow(label: 'Total de Peças', value: 'R\$ ${formatNumberBR(partsTotal)}'),
+              _InfoRow(label: 'Total de Peças',
+                  value: 'R\$ ${formatNumberBR(partsTotal)}'),
             ],
-            if (laborCost > 0) ...[
+
+            if (service.laborCost > 0) ...[
               const SizedBox(height: 8),
-              _InfoRow(label: 'Horas Trabalhadas', value: '${service.laborHours.toStringAsFixed(2)}h'),
-              _InfoRow(label: 'Custo de Mão de Obra', value: 'R\$ ${formatNumberBR(laborCost)}'),
+              _InfoRow(
+                  label: 'Horas Trabalhadas',
+                  value: '${service.laborHours.toStringAsFixed(2)}h'),
+              _InfoRow(
+                  label: 'Custo de Mão de Obra',
+                  value: 'R\$ ${formatNumberBR(service.laborCost)}'),
             ],
+
             if (totalCost > 0) ...[
               const Divider(),
               const SizedBox(height: 8),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
                 children: [
                   Text(
                     'TOTAL GERAL',
@@ -342,29 +351,35 @@ class ServiceDetailScreen extends StatelessWidget {
     );
   }
 
+
   Future<void> _loadRelatedData(BuildContext context) async {
     await context.read<ClientProvider>().loadClients();
     await context.read<MechanicProvider>().loadMechanics();
     await context.read<VehicleProvider>().loadVehicles();
   }
 
+
+
   Widget _buildStatusCard(BuildContext context) {
-    Color statusColor;
-    IconData statusIcon;
+    late final Color statusColor;
+    late final IconData statusIcon;
 
     switch (service.status) {
       case ServiceStatus.pending:
         statusColor = Colors.orange;
         statusIcon = Icons.schedule;
         break;
+
       case ServiceStatus.inProgress:
         statusColor = Colors.blue;
         statusIcon = Icons.build;
         break;
+
       case ServiceStatus.finished:
         statusColor = Colors.green;
         statusIcon = Icons.check_circle;
         break;
+
       case ServiceStatus.washing:
         statusColor = Colors.cyan;
         statusIcon = Icons.local_car_wash;
@@ -374,17 +389,21 @@ class ServiceDetailScreen extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
+
         child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: statusColor,
               radius: 24,
+              backgroundColor: statusColor,
               child: Icon(statusIcon, color: Colors.white),
             ),
+
             const SizedBox(width: 16),
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+
                 children: [
                   Text(
                     'Status',
@@ -392,7 +411,9 @@ class ServiceDetailScreen extends StatelessWidget {
                       color: Colors.grey[600],
                     ),
                   ),
+
                   const SizedBox(height: 4),
+
                   Text(
                     service.statusDisplay,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -409,24 +430,30 @@ class ServiceDetailScreen extends StatelessWidget {
     );
   }
 
+
   Widget _buildClientCard(BuildContext context) {
-    final client = context.read<ClientProvider>().clients
-        .firstWhere((c) => c.id == service.clientId, orElse: () => Client(
-          id: service.clientId,
-          name: 'Cliente não encontrado',
-          phone: '',
-          registrationDate: DateTime.now(),
-        ));
+    final client = context.read<ClientProvider>().clients.firstWhere(
+          (c) => c.id == service.clientId,
+      orElse: () => Client(
+        id: service.clientId,
+        name: 'Cliente não encontrado',
+        phone: '',
+        registrationDate: DateTime.now(),
+      ),
+    );
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+
           children: [
             Row(
               children: [
-                Icon(Icons.person, color: Theme.of(context).colorScheme.primary),
+                Icon(Icons.person,
+                    color: Theme.of(context).colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   'Cliente',
@@ -436,11 +463,15 @@ class ServiceDetailScreen extends StatelessWidget {
                 ),
               ],
             ),
+
             const Divider(),
             const SizedBox(height: 8),
+
             _InfoRow(label: 'Nome', value: client.name),
             const SizedBox(height: 8),
+
             _InfoRow(label: 'Telefone', value: client.phone),
+
             if (client.email != null && client.email!.isNotEmpty) ...[
               const SizedBox(height: 8),
               _InfoRow(label: 'Email', value: client.email!),
@@ -451,24 +482,31 @@ class ServiceDetailScreen extends StatelessWidget {
     );
   }
 
+
+
   Widget _buildMechanicCard(BuildContext context) {
-    final mechanic = context.read<MechanicProvider>().mechanics
-        .firstWhere((m) => m.id == service.mechanicId, orElse: () => Mechanic(
-          id: service.mechanicId,
-          name: service.mechanicName,
-          phone: '',
-          registrationDate: DateTime.now(),
-        ));
+    final mechanic = context.read<MechanicProvider>().mechanics.firstWhere(
+          (m) => m.id == service.mechanicId,
+      orElse: () => Mechanic(
+        id: service.mechanicId,
+        name: service.mechanicName,
+        phone: '',
+        registrationDate: DateTime.now(),
+      ),
+    );
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+
           children: [
             Row(
               children: [
-                Icon(Icons.build, color: Theme.of(context).colorScheme.secondary),
+                Icon(Icons.build,
+                    color: Theme.of(context).colorScheme.secondary),
                 const SizedBox(width: 8),
                 Text(
                   'Mecânico',
@@ -478,11 +516,15 @@ class ServiceDetailScreen extends StatelessWidget {
                 ),
               ],
             ),
+
             const Divider(),
             const SizedBox(height: 8),
+
             _InfoRow(label: 'Nome', value: mechanic.name),
             const SizedBox(height: 8),
+
             _InfoRow(label: 'Telefone', value: mechanic.phone),
+
             if (mechanic.email != null && mechanic.email!.isNotEmpty) ...[
               const SizedBox(height: 8),
               _InfoRow(label: 'Email', value: mechanic.email!),
@@ -493,25 +535,32 @@ class ServiceDetailScreen extends StatelessWidget {
     );
   }
 
+
+
   Widget _buildServiceInfoCard(BuildContext context) {
-    final vehicle = context.read<VehicleProvider>().vehicles
-        .firstWhere((v) => v.id == service.vehicleId, orElse: () => Vehicle(
-          id: service.vehicleId,
-          clientId: service.clientId,
-          brand: 'Veículo',
-          model: 'não encontrado',
-          year: 0,
-        ));
+    final vehicle = context.read<VehicleProvider>().vehicles.firstWhere(
+          (v) => v.id == service.vehicleId,
+      orElse: () => Vehicle(
+        id: service.vehicleId,
+        clientId: service.clientId,
+        brand: 'Veículo',
+        model: 'não encontrado',
+        year: 0,
+      ),
+    );
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
+
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+
           children: [
             Row(
               children: [
-                Icon(Icons.info, color: Theme.of(context).colorScheme.tertiary),
+                Icon(Icons.info,
+                    color: Theme.of(context).colorScheme.tertiary),
                 const SizedBox(width: 8),
                 Text(
                   'Informações do Serviço',
@@ -521,13 +570,17 @@ class ServiceDetailScreen extends StatelessWidget {
                 ),
               ],
             ),
+
             const Divider(),
             const SizedBox(height: 8),
+
             _InfoRow(label: 'Veículo', value: vehicle.displayName),
+
             if (vehicle.plate != null) ...[
               const SizedBox(height: 8),
               _InfoRow(label: 'Placa', value: vehicle.plate!),
             ],
+
             if (service.startDate != null) ...[
               const SizedBox(height: 8),
               _InfoRow(
@@ -535,6 +588,7 @@ class ServiceDetailScreen extends StatelessWidget {
                 value: _formatDate(service.startDate!),
               ),
             ],
+
             if (service.endDate != null) ...[
               const SizedBox(height: 8),
               _InfoRow(
@@ -542,6 +596,7 @@ class ServiceDetailScreen extends StatelessWidget {
                 value: _formatDate(service.endDate!),
               ),
             ],
+
             if (service.totalCost > 0) ...[
               const SizedBox(height: 8),
               _InfoRow(
@@ -555,24 +610,33 @@ class ServiceDetailScreen extends StatelessWidget {
     );
   }
 
+
+
   String _formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/'
         '${date.month.toString().padLeft(2, '0')}/'
-        '${date.year} ${date.hour.toString().padLeft(2, '0')}:'
+        '${date.year} '
+        '${date.hour.toString().padLeft(2, '0')}:'
         '${date.minute.toString().padLeft(2, '0')}';
   }
 }
+
+
 
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoRow({required this.label, required this.value});
+  const _InfoRow({
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
+
       children: [
         SizedBox(
           width: 100,
@@ -584,6 +648,7 @@ class _InfoRow extends StatelessWidget {
             ),
           ),
         ),
+
         Expanded(
           child: Text(
             value,
@@ -594,4 +659,3 @@ class _InfoRow extends StatelessWidget {
     );
   }
 }
-

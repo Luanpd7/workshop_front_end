@@ -14,7 +14,7 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProviderStateMixin {
   final ReportService _reportService = ReportService();
   late TabController _tabController;
-  
+
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
   Map<String, dynamic>? _partsReport;
@@ -45,6 +45,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
         _selectedDate.year,
         _selectedDate.month,
       );
+
       final servicesReport = await _reportService.getServicesReportByMonth(
         _selectedDate.year,
         _selectedDate.month,
@@ -71,6 +72,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
       lastDate: DateTime.now(),
       initialDatePickerMode: DatePickerMode.year,
     );
+
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
@@ -83,20 +85,20 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Relatórios'),
+        title: const Text('Reports'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(text: 'Peças', icon: Icon(Icons.build)),
-            Tab(text: 'Serviços', icon: Icon(Icons.build_circle)),
+            Tab(text: 'Parts', icon: Icon(Icons.build)),
+            Tab(text: 'Services', icon: Icon(Icons.build_circle)),
           ],
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_today),
             onPressed: () => _selectDate(context),
-            tooltip: 'Selecionar Mês',
+            tooltip: 'Select Month',
           ),
         ],
       ),
@@ -109,7 +111,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  DateFormat('MMMM/yyyy', 'pt_BR').format(_selectedDate),
+                  DateFormat('MMMM/yyyy').format(_selectedDate),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -118,7 +120,7 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                 IconButton(
                   icon: const Icon(Icons.refresh),
                   onPressed: _loadReports,
-                  tooltip: 'Atualizar',
+                  tooltip: 'Reload',
                 ),
               ],
             ),
@@ -138,42 +140,16 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
     );
   }
 
+
   Widget _buildPartsReport() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
 
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-            const SizedBox(height: 16),
-            Text(
-              'Erro ao carregar relatório',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                _error!,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-            ElevatedButton(
-              onPressed: _loadReports,
-              child: const Text('Tentar Novamente'),
-            ),
-          ],
-        ),
-      );
+      return _buildErrorWidget();
     }
 
     if (_partsReport == null) {
-      return const Center(child: Text('Nenhum dado disponível'));
+      return const Center(child: Text('No data available'));
     }
 
     final summary = (_partsReport!['summary'] as Map?)?.cast<String, dynamic>();
@@ -183,90 +159,64 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
     final totalSold = _parseDouble(summary?['totalSold'] ?? _partsReport!['totalSold']);
     final profit = _parseDouble(summary?['totalProfit'], totalSold - totalPurchased);
     final laborCost = _parseDouble(summary?['laborCost'] ?? breakdown?['labor']);
-    final totalPartsQuantity = _parseInt(summary?['totalPartsQuantity'] ?? _partsReport!['totalPartsQuantity']);
+    final totalPartsQty = _parseInt(summary?['totalPartsQuantity'] ?? _partsReport!['totalPartsQuantity']);
     final totalServices = _parseInt(summary?['totalServices'] ?? _partsReport!['totalServices']);
     final partsList = (_partsReport!['parts'] as List? ?? [])
         .whereType<Map>()
-        .map((part) => part.cast<String, dynamic>())
+        .map((p) => p.cast<String, dynamic>())
         .toList();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // SUMMARY CARD
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Resumo do Mês',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'Monthly Summary',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
-                  _SummaryRow(
-                    label: 'Total Comprado',
-                    value: 'R\$ ${formatNumberBR(totalPurchased)}',
-                    color: Colors.blue,
-                  ),
+                  _SummaryRow(label: 'Total Purchased', value: 'R\$ ${formatNumberBR(totalPurchased)}', color: Colors.blue),
                   const SizedBox(height: 8),
-                  _SummaryRow(
-                    label: 'Total Vendido',
-                    value: 'R\$ ${formatNumberBR(totalSold)}',
-                    color: Colors.green,
-                  ),
+                  _SummaryRow(label: 'Total Sold', value: 'R\$ ${formatNumberBR(totalSold)}', color: Colors.green),
                   const SizedBox(height: 8),
-                  _SummaryRow(
-                    label: 'Lucro',
-                    value: 'R\$ ${formatNumberBR(profit)}',
-                    color: profit >= 0 ? Colors.green : Colors.red,
-                  ),
+                  _SummaryRow(label: 'Profit', value: 'R\$ ${formatNumberBR(profit)}', color: profit >= 0 ? Colors.green : Colors.red),
+
                   if (laborCost > 0) ...[
                     const SizedBox(height: 8),
-                    _SummaryRow(
-                      label: 'Custo de Mão de Obra',
-                      value: 'R\$ ${formatNumberBR(laborCost)}',
-                      color: Colors.indigo,
-                    ),
+                    _SummaryRow(label: 'Labor Cost', value: 'R\$ ${formatNumberBR(laborCost)}', color: Colors.indigo),
                   ],
-                  if (totalPartsQuantity > 0) ...[
+                  if (totalPartsQty > 0) ...[
                     const SizedBox(height: 8),
-                    _SummaryRow(
-                      label: 'Quantidade de Peças',
-                      value: '$totalPartsQuantity',
-                      color: Colors.deepPurple,
-                    ),
+                    _SummaryRow(label: 'Parts Quantity', value: '$totalPartsQty', color: Colors.deepPurple),
                   ],
                   if (totalServices > 0) ...[
                     const SizedBox(height: 8),
-                    _SummaryRow(
-                      label: 'Serviços com Peças',
-                      value: '$totalServices',
-                      color: Colors.orange,
-                    ),
+                    _SummaryRow(label: 'Services with Parts', value: '$totalServices', color: Colors.orange),
                   ],
                 ],
               ),
             ),
           ),
+
           const SizedBox(height: 16),
 
+          // BAR CHART
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Gráfico de Compra vs Venda',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text('Purchase vs Sales Chart',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   SizedBox(
                     height: 200,
@@ -281,50 +231,33 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                             sideTitles: SideTitles(
                               showTitles: true,
                               getTitlesWidget: (value, meta) {
-                                if (value.toInt() == 0) return const Text('Comprado');
-                                if (value.toInt() == 1) return const Text('Vendido');
+                                if (value.toInt() == 0) return const Text('Purchased');
+                                if (value.toInt() == 1) return const Text('Sold');
                                 return const Text('');
                               },
                             ),
                           ),
                           leftTitles: AxisTitles(
-
                             sideTitles: SideTitles(
                               reservedSize: 60,
                               showTitles: true,
                               getTitlesWidget: (value, meta) {
-                                return Text('R\$ ${formatNumberBR(value.toInt())}' , style: TextStyle(fontSize: 10),) ;
+                                return Text('R\$ ${formatNumberBR(value.toInt())}', style: const TextStyle(fontSize: 10));
                               },
                             ),
                           ),
-                          topTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
+                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                         ),
                         borderData: FlBorderData(show: false),
                         barGroups: [
                           BarChartGroupData(
                             x: 0,
-                            barRods: [
-                              BarChartRodData(
-                                toY: totalPurchased,
-                                color: Colors.blue,
-                                width: 40,
-                              ),
-                            ],
+                            barRods: [BarChartRodData(toY: totalPurchased, color: Colors.blue, width: 40)],
                           ),
                           BarChartGroupData(
                             x: 1,
-                            barRods: [
-                              BarChartRodData(
-                                toY: totalSold,
-                                color: Colors.green,
-                                width: 40,
-                              ),
-                            ],
+                            barRods: [BarChartRodData(toY: totalSold, color: Colors.green, width: 40)],
                           ),
                         ],
                       ),
@@ -334,158 +267,107 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
               ),
             ),
           ),
+
           const SizedBox(height: 16),
 
+          // BEST SELLING PARTS
           if (partsList.isNotEmpty) ...[
             Text(
-              'Peças Mais Vendidas',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              'Best Selling Parts',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-            ...partsList.take(10).map((part) => Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    title: Text(part['name'] ?? ''),
-                    subtitle: Text('Código: ${part['code'] ?? ''}'),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '${part['quantity'] ?? 0}x',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          'R\$ ${formatNumberBR((part['total'] ?? 0.0))}',
-                          style: TextStyle(color: Colors.green[700]),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),),
-          ],
+
+            ...partsList.take(10).map((p) => Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                title: Text(p['name'] ?? ''),
+                subtitle: Text('Code: ${p['code'] ?? ''}'),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('${p['quantity'] ?? 0}x', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text('R\$ ${formatNumberBR(_parseDouble(p['total']))}',
+                        style: TextStyle(color: Colors.green[700])),
+                  ],
+                ),
+              ),
+            )),
+          ]
         ],
       ),
     );
   }
 
+
   Widget _buildServicesReport() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-            const SizedBox(height: 16),
-            Text(
-              'Erro ao carregar relatório',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                _error!,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ),
-            ElevatedButton(
-              onPressed: _loadReports,
-              child: const Text('Tentar Novamente'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_servicesReport == null) {
-      return const Center(child: Text('Nenhum dado disponível'));
-    }
+    if (_isLoading) return const Center(child: CircularProgressIndicator());
+    if (_error != null) return _buildErrorWidget();
+    if (_servicesReport == null) return const Center(child: Text('No data available'));
 
     final summary = (_servicesReport!['summary'] as Map?)?.cast<String, dynamic>();
+
     final totalServices = _parseInt(summary?['totalServices'] ?? _servicesReport!['totalServices']);
     final totalRevenue = _parseDouble(summary?['totalRevenue'] ?? _servicesReport!['totalRevenue']);
-    final averageTicket = _parseDouble(summary?['averageTicket'] ?? _servicesReport!['averageTicket']);
+    final avgTicket = _parseDouble(summary?['averageTicket'] ?? _servicesReport!['averageTicket']);
 
     final statusStatsRaw = (_servicesReport!['servicesByStatus'] as List? ?? [])
         .whereType<Map>()
-        .map((stat) => stat.cast<String, dynamic>())
+        .map((m) => m.cast<String, dynamic>())
         .toList();
 
     final Map<String, int> statusCounts = {};
     final Map<String, double> statusRevenue = {};
-    for (final stat in statusStatsRaw) {
-      final statusKey = stat['status']?.toString() ?? 'unknown';
-      statusCounts[statusKey] = _parseInt(stat['count']);
-      statusRevenue[statusKey] = _parseDouble(stat['revenue']);
+
+    for (final s in statusStatsRaw) {
+      final status = s['status']?.toString() ?? 'unknown';
+      statusCounts[status] = _parseInt(s['count']);
+      statusRevenue[status] = _parseDouble(s['revenue']);
     }
 
     final servicesList = (_servicesReport!['services'] as List? ?? [])
         .whereType<Map>()
-        .map((service) => service.cast<String, dynamic>())
+        .map((s) => s.cast<String, dynamic>())
         .toList();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // SUMMARY
           Card(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Resumo do Mês',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text('Monthly Summary',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
-                  _SummaryRow(
-                    label: 'Total de Serviços',
-                    value: totalServices.toString(),
-                    color: Colors.blue,
-                  ),
+                  _SummaryRow(label: 'Total Services', value: totalServices.toString(), color: Colors.blue),
                   const SizedBox(height: 8),
-                  _SummaryRow(
-                    label: 'Receita Total',
-                    value: 'R\$ ${formatNumberBR(totalRevenue)}',
-                    color: Colors.green,
-                  ),
+                  _SummaryRow(label: 'Total Revenue', value: 'R\$ ${formatNumberBR(totalRevenue)}', color: Colors.green),
                   const SizedBox(height: 8),
-                  _SummaryRow(
-                    label: 'Ticket Médio',
-                    value: 'R\$ ${formatNumberBR(averageTicket)}',
-                    color: Colors.indigo,
-                  ),
+                  _SummaryRow(label: 'Average Ticket', value: 'R\$ ${formatNumberBR(avgTicket)}', color: Colors.indigo),
                 ],
               ),
             ),
           ),
+
           const SizedBox(height: 16),
 
+          // PIE CHART
           if (statusCounts.isNotEmpty)
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Serviços por Status',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text('Services by Status',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
                     SizedBox(
                       height: 200,
@@ -494,10 +376,10 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                           sectionsSpace: 2,
                           centerSpaceRadius: 40,
                           sections: statusCounts.entries
-                              .where((entry) => entry.value > 0)
-                              .map((entry) {
-                            final status = entry.key;
-                            final count = entry.value;
+                              .where((e) => e.value > 0)
+                              .map((e) {
+                            final status = e.key;
+                            final count = e.value;
                             return PieChartSectionData(
                               value: count.toDouble(),
                               title: '${_getStatusLabel(status)}\n$count',
@@ -509,10 +391,11 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                       ),
                     ),
                     const SizedBox(height: 16),
-                    ...statusStatsRaw.map((stat) {
-                      final status = stat['status']?.toString() ?? 'unknown';
-                      final count = _parseInt(stat['count']);
-                      final revenue = _parseDouble(stat['revenue']);
+                    ...statusStatsRaw.map((s) {
+                      final status = s['status']?.toString() ?? 'unknown';
+                      final count = _parseInt(s['count']);
+                      final revenue = _parseDouble(s['revenue']);
+
                       return ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: CircleAvatar(
@@ -523,99 +406,126 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
                           ),
                         ),
                         title: Text(_getStatusLabel(status)),
-                        subtitle: Text('Receita: R\$ ${formatNumberBR(revenue)}'),
+                        subtitle: Text('Revenue: R\$ ${formatNumberBR(revenue)}'),
                       );
                     }),
                   ],
                 ),
               ),
             ),
+
           const SizedBox(height: 16),
+
+          // SERVICES LIST
           if (servicesList.isNotEmpty) ...[
-            Text(
-              'Serviços Realizados',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text('Completed Services',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            ...servicesList.take(20).map((service) => Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: Stack(
-                    children: [
-                      ListTile(
+
+            ...servicesList.take(20).map((service) {
+              final status = service['status']?.toString() ?? '';
+
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: Stack(
+                  children: [
+                    ListTile(
                       title: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Serviço #${service['id'] ?? ''}'),
+                          Text('Service #${service['id'] ?? ''}'),
                         ],
                       ),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Cliente: ${service['clientName'] ?? ''}'),
+                          Text('Client: ${service['clientName'] ?? ''}'),
                           if ((service['vehicleBrand'] ?? '').toString().isNotEmpty ||
                               (service['vehicleModel'] ?? '').toString().isNotEmpty)
                             Text(
-                              'Veículo: ${service['vehicleBrand'] ?? ''} ${service['vehicleModel'] ?? ''}',
+                              'Vehicle: ${service['vehicleBrand'] ?? ''} ${service['vehicleModel'] ?? ''}',
                               style: TextStyle(color: Colors.grey[600], fontSize: 12),
                             ),
                           if ((service['vehiclePlate'] ?? '').toString().isNotEmpty)
-                            Text(
-                              'Placa: ${service['vehiclePlate']}',
-                              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                            ),
+                            Text('Plate: ${service['vehiclePlate']}',
+                                style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                           if ((service['startDate'] ?? '').toString().isNotEmpty ||
                               (service['endDate'] ?? '').toString().isNotEmpty)
                             Text(
-                              'Período: ${_formatDate(service['startDate'])} - ${_formatDate(service['endDate'])}',
+                              'Period: ${_formatDate(service['startDate'])} - ${_formatDate(service['endDate'])}',
                               style: TextStyle(color: Colors.grey[600], fontSize: 12),
                             ),
                         ],
                       ),
 
                       trailing: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          minWidth: 140,
-                          maxWidth: 180,
-                        ),
+                        constraints: const BoxConstraints(minWidth: 140, maxWidth: 180),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              'Total: R\$ ${formatNumberBR( _parseDouble(service['totalCost']))}',
+                              'Total: R\$ ${formatNumberBR(_parseDouble(service['totalCost']))}',
                               style: TextStyle(color: Colors.green[700]),
                             ),
                             if (_parseDouble(service['partsCost']) > 0)
                               Text(
-                                'Peças: R\$ ${formatNumberBR( _parseDouble(service['partsCost']))}',
+                                'Parts: R\$ ${formatNumberBR(_parseDouble(service['partsCost']))}',
                                 style: TextStyle(color: Colors.blueGrey[600], fontSize: 12),
                               ),
                             if (_parseDouble(service['laborCost']) > 0)
                               Text(
-                                'Mão de obra: R\$ ${formatNumberBR( _parseDouble(service['laborCost']))}',
+                                'Labor: R\$ ${formatNumberBR(_parseDouble(service['laborCost']))}',
                                 style: TextStyle(color: Colors.blueGrey[600], fontSize: 12),
                               ),
                           ],
                         ),
                       ),
                     ),
-                      Positioned(
-                        top: 5,
-                        right: 10,
-                        child: Text(
-                          _getStatusLabel(service['status']?.toString() ?? ''),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: _getStatusColor(service['status']?.toString() ?? ''),
-                          ),
+
+                    Positioned(
+                      top: 5,
+                      right: 10,
+                      child: Text(
+                        _getStatusLabel(status),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: _getStatusColor(status),
                         ),
                       ),
-                    ]
-                  ),
-                ),),
+                    ),
+                  ],
+                ),
+              );
+            }),
           ],
+        ],
+      ),
+    );
+  }
+
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+          const SizedBox(height: 16),
+          Text('Error loading report', style: Theme.of(context).textTheme.headlineSmall),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+          ElevatedButton(
+            onPressed: _loadReports,
+            child: const Text('Try Again'),
+          ),
         ],
       ),
     );
@@ -647,27 +557,24 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
   String _getStatusLabel(String status) {
     switch (status) {
       case 'pending':
-        return 'Pendente';
+        return 'Pending';
       case 'inProgress':
-        return 'Em Andamento';
+        return 'In Progress';
       case 'finished':
-        return 'Finalizado';
+        return 'Finished';
       case 'washing':
-        return 'Lavagem/Polimento';
+        return 'Washing/Polishing';
       default:
-        return status.isEmpty ? 'Desconhecido' : status;
+        return status.isEmpty ? 'Unknown' : status;
     }
   }
 
   String _formatDate(dynamic value) {
     if (value == null) return '--';
-    if (value is DateTime) {
-      return DateFormat('dd/MM/yyyy').format(value);
-    }
+    if (value is DateTime) return DateFormat('dd/MM/yyyy').format(value);
     if (value is String && value.isNotEmpty) {
       try {
-        final parsed = DateTime.parse(value);
-        return DateFormat('dd/MM/yyyy').format(parsed);
+        return DateFormat('dd/MM/yyyy').format(DateTime.parse(value));
       } catch (_) {
         return value;
       }
@@ -684,12 +591,13 @@ class _ReportsScreenState extends State<ReportsScreen> with SingleTickerProvider
       case 'finished':
         return Colors.green;
       case 'washing':
-        return Colors.cyan;
+        return Colors.purple;
       default:
         return Colors.grey;
     }
   }
 }
+
 
 class _SummaryRow extends StatelessWidget {
   final String label;
@@ -707,23 +615,9 @@ class _SummaryRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
+        Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+        Text(value, style: TextStyle(fontWeight: FontWeight.bold)),
       ],
     );
   }
 }
-
-
-
-
-
